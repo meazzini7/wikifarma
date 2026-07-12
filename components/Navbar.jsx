@@ -3,26 +3,26 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
-import { auth, googleProvider } from '@/lib/firebase';
+import { getFirebaseAuth, googleProvider } from '@/lib/firebase';
 import { ADMIN_EMAIL } from '@/lib/constants';
 
 export default function Navbar() {
   const [user, setUser] = useState(undefined); // undefined = loading, null = logged out
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, setUser);
+    const unsubscribe = onAuthStateChanged(getFirebaseAuth(), setUser);
     return unsubscribe;
   }, []);
 
   const handleLogin = async () => {
     try {
-      await signInWithPopup(auth, googleProvider);
+      await signInWithPopup(getFirebaseAuth(), googleProvider);
     } catch (err) {
       alert(err.message);
     }
   };
 
-  const handleLogout = () => signOut(auth);
+  const handleLogout = () => signOut(getFirebaseAuth());
 
   return (
     <nav className="nav">
