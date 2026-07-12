@@ -2,6 +2,7 @@ import Script from 'next/script';
 import './globals.css';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import VisitorTracker from '@/components/VisitorTracker';
 import { GA_ID, SITE_URL } from '@/lib/constants';
 
 export const metadata = {
@@ -27,6 +28,7 @@ export default function RootLayout({ children }) {
             gtag('config', '${GA_ID}');
           `}
         </Script>
+        <VisitorTracker />
         <div className="page-wrapper">
           <Navbar />
           <main>{children}</main>
