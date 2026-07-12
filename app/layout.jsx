@@ -1,9 +1,11 @@
+import { Suspense } from 'react';
 import Script from 'next/script';
 import './globals.css';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import VisitorTracker from '@/components/VisitorTracker';
-import { GA_ID, SITE_URL } from '@/lib/constants';
+import GAListener from '@/components/GAListener';
+import { ADSENSE_ID, GA_ID, SITE_URL } from '@/lib/constants';
 
 export const metadata = {
   metadataBase: new URL(SITE_URL),
@@ -28,6 +30,15 @@ export default function RootLayout({ children }) {
             gtag('config', '${GA_ID}');
           `}
         </Script>
+        <Script
+          async
+          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_ID}`}
+          crossOrigin="anonymous"
+          strategy="afterInteractive"
+        />
+        <Suspense fallback={null}>
+          <GAListener />
+        </Suspense>
         <VisitorTracker />
         <div className="page-wrapper">
           <Navbar />

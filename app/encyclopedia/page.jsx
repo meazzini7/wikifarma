@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getPostsByLetter } from '@/lib/firestore';
 import { PLACEHOLDER_IMAGE } from '@/lib/constants';
+import AdUnit from '@/components/AdUnit';
 
 export const metadata = {
   title: 'Medicinali dalla A alla Z | WikiFarma',
@@ -50,6 +51,8 @@ export default async function EncyclopediaPage({ searchParams }) {
           ))}
         </div>
       )}
+
+      <AdUnit />
     </div>
   );
 }

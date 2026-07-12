@@ -1,7 +1,6 @@
 import { notFound } from 'next/navigation';
-import Script from 'next/script';
 import { getPostBySlug } from '@/lib/firestore';
-import { ADSENSE_ID, PLACEHOLDER_IMAGE } from '@/lib/constants';
+import { PLACEHOLDER_IMAGE } from '@/lib/constants';
 import AdUnit from '@/components/AdUnit';
 
 function stripHtml(html = '') {
@@ -31,12 +30,6 @@ export default async function ArticlePage({ params }) {
 
   return (
     <>
-      <Script
-        async
-        src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_ID}`}
-        crossOrigin="anonymous"
-        strategy="afterInteractive"
-      />
       <div className="article-page">
         <h1 className="article-title">{post.title}</h1>
         <img

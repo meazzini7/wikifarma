@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getPostsByCategory } from '@/lib/firestore';
 import { PLACEHOLDER_IMAGE } from '@/lib/constants';
+import AdUnit from '@/components/AdUnit';
 
 export const dynamic = 'force-dynamic';
 
@@ -48,6 +49,7 @@ export default async function ProblemsPage() {
             ))}
           </div>
         )}
+        <AdUnit />
       </div>
     </>
   );

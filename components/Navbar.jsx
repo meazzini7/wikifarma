@@ -2,17 +2,24 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
 import { getFirebaseAuth, googleProvider } from '@/lib/firebase';
 import { ADMIN_EMAIL } from '@/lib/constants';
 
 export default function Navbar() {
   const [user, setUser] = useState(undefined); // undefined = loading, null = logged out
+  const [menuOpen, setMenuOpen] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(getFirebaseAuth(), setUser);
     return unsubscribe;
   }, []);
+
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [pathname]);
 
   const handleLogin = async () => {
     try {
@@ -30,7 +37,20 @@ export default function Navbar() {
         <Link href="/" className="logo">
           WIKI<span>FARMA</span>
         </Link>
-        <div className="nav-links">
+
+        <button
+          type="button"
+          className="nav-toggle"
+          aria-label="Apri il menu"
+          aria-expanded={menuOpen}
+          onClick={() => setMenuOpen((open) => !open)}
+        >
+          <span />
+          <span />
+          <span />
+        </button>
+
+        <div className={`nav-links${menuOpen ? ' open' : ''}`}>
           <Link href="/encyclopedia">Medicinali dalla A alla Z</Link>
           <Link href="/wellness" style={{ color: 'var(--primary-dark)', fontWeight: 600 }}>
             Benessere
