@@ -250,6 +250,9 @@ button {
 }
 
 .card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
   background: #fff;
   border-radius: 12px;
   overflow: hidden;
