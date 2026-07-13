@@ -2,11 +2,13 @@ import Link from 'next/link';
 import LiveSearch from '@/components/LiveSearch';
 import SafeImage from '@/components/SafeImage';
 import { getHomeStats, getRecentPosts } from '@/lib/firestore';
+import { getDisplayVisitorCount } from '@/lib/visitorCounter';
 
 export const dynamic = 'force-dynamic';
 
 export default async function HomePage() {
   const [stats, recent] = await Promise.all([getHomeStats(), getRecentPosts(9)]);
+  const displayVisitors = getDisplayVisitorCount(stats.visitors);
 
   return (
     <>
@@ -24,7 +26,7 @@ export default async function HomePage() {
             <span className="stat-label">GUIDE</span>
           </div>
           <div className="stat-box">
-            <span className="stat-num">{stats.visitors}</span>
+            <span className="stat-num">{displayVisitors}</span>
             <span className="stat-label">UTENTI</span>
           </div>
         </div>
