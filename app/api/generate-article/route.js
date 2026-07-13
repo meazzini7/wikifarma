@@ -41,8 +41,8 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Risposta AI vuota.' }, { status: 502 });
     }
     const content = cleanOutput(raw);
-    const { cover, inline } = buildArticleImages(topic, category);
-    const finalContent = insertInlineImage(content, inline, topic);
+    const { cover, inline, fallback } = buildArticleImages(topic, category);
+    const finalContent = insertInlineImage(content, inline, topic, fallback);
     return NextResponse.json({ content: finalContent, image_url: cover });
   } catch {
     return NextResponse.json({ error: 'Errore del servizio AI.' }, { status: 500 });

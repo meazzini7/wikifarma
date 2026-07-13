@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { getPostsByLetter } from '@/lib/firestore';
-import { PLACEHOLDER_IMAGE } from '@/lib/constants';
-import AdUnit from '@/components/AdUnit';
+import SafeImage from '@/components/SafeImage';
 
 export const metadata = {
   title: 'Medicinali dalla A alla Z | WikiFarma',
@@ -38,11 +37,11 @@ export default async function EncyclopediaPage({ searchParams }) {
         <div className="news-grid">
           {posts.map((post) => (
             <Link key={post.id} href={`/${post.slug}`} className="card">
-              <img
-                src={post.image_url || PLACEHOLDER_IMAGE}
+              <SafeImage
+                src={post.image_url}
+                category={post.category}
                 alt={post.title}
                 className="card-img"
-                loading="lazy"
               />
               <div className="card-body">
                 <h3>{post.title}</h3>
@@ -51,8 +50,6 @@ export default async function EncyclopediaPage({ searchParams }) {
           ))}
         </div>
       )}
-
-      <AdUnit />
     </div>
   );
 }

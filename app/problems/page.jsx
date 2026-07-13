@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { getPostsByCategory } from '@/lib/firestore';
-import { PLACEHOLDER_IMAGE } from '@/lib/constants';
-import AdUnit from '@/components/AdUnit';
+import SafeImage from '@/components/SafeImage';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,12 +30,12 @@ export default async function ProblemsPage() {
           <div className="news-grid">
             {posts.map((post) => (
               <Link key={post.id} href={`/${post.slug}`} className="card">
-                <img
-                  src={post.image_url || PLACEHOLDER_IMAGE}
+                <SafeImage
+                  src={post.image_url}
+                  category={post.category}
                   alt={post.title}
                   className="card-img"
                   style={{ height: 220 }}
-                  loading="lazy"
                 />
                 <div className="card-body">
                   <div className="card-tag" style={{ background: '#d84315' }}>
@@ -49,7 +48,6 @@ export default async function ProblemsPage() {
             ))}
           </div>
         )}
-        <AdUnit />
       </div>
     </>
   );

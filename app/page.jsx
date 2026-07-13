@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import LiveSearch from '@/components/LiveSearch';
+import SafeImage from '@/components/SafeImage';
 import { getHomeStats, getRecentPosts } from '@/lib/firestore';
-import { PLACEHOLDER_IMAGE } from '@/lib/constants';
 
 export const dynamic = 'force-dynamic';
 
@@ -103,11 +103,11 @@ export default async function HomePage() {
           <div className="news-grid">
             {recent.map((post) => (
               <Link key={post.id} href={`/${post.slug}`} className="card">
-                <img
-                  src={post.image_url || PLACEHOLDER_IMAGE}
+                <SafeImage
+                  src={post.image_url}
+                  category={post.category}
                   alt={post.title}
                   className="card-img"
-                  loading="lazy"
                 />
                 <div className="card-body">
                   <div className="card-tag">{post.category}</div>

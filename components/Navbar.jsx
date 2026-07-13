@@ -68,6 +68,9 @@ export default function Navbar() {
               </Link>
             ) : (
               <>
+                <Link href="/per-te" style={{ color: 'var(--primary)', fontWeight: 700 }}>
+                  🎯 Per Te
+                </Link>
                 <Link href="/profile" style={{ color: 'var(--primary)', fontWeight: 700 }}>
                   👤 Profilo
                 </Link>

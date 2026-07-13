@@ -1,7 +1,7 @@
 :root {
-  --primary: #43a047;
-  --primary-dark: #2e7d32;
-  --primary-light: #81c784;
+  --primary: #0a6e42;
+  --primary-dark: #054d2e;
+  --primary-light: #2e9e68;
   --alert: #d32f2f;
   --bg: #f7f9f7;
   --text: #263238;
@@ -486,6 +486,24 @@ button {
   object-fit: cover;
   border-radius: 12px;
   margin-bottom: 20px;
+}
+
+.favorite-btn {
+  display: inline-block;
+  margin-bottom: 20px;
+  padding: 10px 20px;
+  border: 2px solid var(--primary);
+  background: #fff;
+  color: var(--primary);
+  border-radius: 24px;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.favorite-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
 }
 
 .article-content {

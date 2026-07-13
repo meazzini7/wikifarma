@@ -209,7 +209,7 @@ export default function AdminPage() {
                 <option value="blog">Salute</option>
               </select>
             </div>
-            <button className="btn-tool" style={{ background: '#2e7d32', width: '100%' }} disabled={genLoading}>
+            <button className="btn-tool" style={{ background: '#054d2e', width: '100%' }} disabled={genLoading}>
               {genLoading ? 'GENERAZIONE...' : 'GENERA'}
             </button>
           </form>
