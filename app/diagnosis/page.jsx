@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { onAuthStateChanged, signInWithPopup } from 'firebase/auth';
 import { getFirebaseAuth, googleProvider } from '@/lib/firebase';
 import { saveDiagnosis } from '@/lib/firestore';
+import { trackEvent } from '@/lib/gtag';
 
 export default function DiagnosisPage() {
   const [user, setUser] = useState(undefined);
@@ -38,6 +39,7 @@ export default function DiagnosisPage() {
         setError(data.error || "Errore durante l'analisi.");
       } else {
         setResult(data.text);
+        trackEvent('diagnosis_completed', { logged_in: Boolean(user) });
         if (user) {
           saveDiagnosis({ userEmail: user.email, symptoms: text, response: data.text }).catch(() => {});
         }

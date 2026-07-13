@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { trackEvent } from '@/lib/gtag';
 
 function highlightMatch(title, query) {
   const idx = title.toLowerCase().indexOf(query.toLowerCase());
@@ -43,6 +44,7 @@ export default function LiveSearch() {
         setResults(data);
         setActiveIndex(-1);
         setOpen(true);
+        trackEvent('search', { search_term: query, results_count: data.length });
       } catch {
         // ignore aborted/failed requests
       } finally {

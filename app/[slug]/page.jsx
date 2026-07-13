@@ -1,10 +1,12 @@
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import Script from 'next/script';
-import { getPostBySlug } from '@/lib/firestore';
-import { ADSENSE_ID } from '@/lib/constants';
+import { getPostBySlug, getRecommendedPosts } from '@/lib/firestore';
+import { ADSENSE_ID, SITE_URL } from '@/lib/constants';
 import SafeImage from '@/components/SafeImage';
 import FavoriteButton from '@/components/FavoriteButton';
 import ReadingTracker from '@/components/ReadingTracker';
+import ShareButtons from '@/components/ShareButtons';
 
 function stripHtml(html = '') {
   return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
@@ -19,7 +21,18 @@ export async function generateMetadata({ params }) {
   return {
     title: `${post.title} | WikiFarma`,
     description,
+    alternates: {
+      canonical: `/${post.slug}`,
+    },
     openGraph: {
+      title: post.title,
+      description,
+      url: `${SITE_URL}/${post.slug}`,
+      type: 'article',
+      images: post.image_url ? [post.image_url] : undefined,
+    },
+    twitter: {
+      card: 'summary_large_image',
       title: post.title,
       description,
       images: post.image_url ? [post.image_url] : undefined,
@@ -30,6 +43,30 @@ export async function generateMetadata({ params }) {
 export default async function ArticlePage({ params }) {
   const post = await getPostBySlug(params.slug);
   if (!post) notFound();
+
+  const related = await getRecommendedPosts([post.category], new Set([post.slug]), 4);
+  const url = `${SITE_URL}/${post.slug}`;
+  const description = stripHtml(post.content).slice(0, 200);
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': post.type === 'drug' ? 'MedicalWebPage' : 'Article',
+    headline: post.title,
+    description,
+    image: post.image_url || undefined,
+    url,
+    datePublished: post.created_at?.toDate?.().toISOString() || undefined,
+    dateModified: post.created_at?.toDate?.().toISOString() || undefined,
+    publisher: {
+      '@type': 'Organization',
+      name: 'WikiFarma',
+      url: SITE_URL,
+    },
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': url,
+    },
+  };
 
   return (
     <>
@@ -44,6 +81,9 @@ export default async function ArticlePage({ params }) {
         crossOrigin="anonymous"
         strategy="afterInteractive"
       />
+      <Script id="article-jsonld" type="application/ld+json" strategy="afterInteractive">
+        {JSON.stringify(jsonLd)}
+      </Script>
       <ReadingTracker post={{ id: post.id, slug: post.slug, title: post.title, category: post.category }} />
       <div className="article-page">
         <h1 className="article-title">{post.title}</h1>
@@ -54,15 +94,18 @@ export default async function ArticlePage({ params }) {
           className="article-main-img"
         />
 
-        <FavoriteButton
-          post={{
-            id: post.id,
-            slug: post.slug,
-            title: post.title,
-            category: post.category,
-            image_url: post.image_url || null,
-          }}
-        />
+        <div className="article-actions">
+          <FavoriteButton
+            post={{
+              id: post.id,
+              slug: post.slug,
+              title: post.title,
+              category: post.category,
+              image_url: post.image_url || null,
+            }}
+          />
+          <ShareButtons url={url} title={post.title} />
+        </div>
 
         {/* Contenuto generato dall'admin panel AI (fase 7): sorgente attendibile, non input utente. */}
         <div className="article-content" dangerouslySetInnerHTML={{ __html: post.content || '' }} />
@@ -70,6 +113,23 @@ export default async function ArticlePage({ params }) {
         <div className="disclaimer-box">
           ⚠️ Le informazioni qui riportate non sostituiscono il parere del medico.
         </div>
+
+        {related.length > 0 && (
+          <div className="related-articles">
+            <h2>Articoli correlati</h2>
+            <div className="news-grid">
+              {related.map((r) => (
+                <Link key={r.id} href={`/${r.slug}`} className="card">
+                  <SafeImage src={r.image_url} category={r.category} alt={r.title} className="card-img" />
+                  <div className="card-body">
+                    <div className="card-tag">{r.category}</div>
+                    <h3>{r.title}</h3>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

@@ -520,9 +520,16 @@ button {
   margin-bottom: 20px;
 }
 
+.article-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
 .favorite-btn {
   display: inline-block;
-  margin-bottom: 20px;
   padding: 10px 20px;
   border: 2px solid var(--primary);
   background: #fff;
@@ -536,6 +543,48 @@ button {
 .favorite-btn:disabled {
   opacity: 0.6;
   cursor: wait;
+}
+
+.share-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.share-label {
+  font-size: 0.85rem;
+  color: #666;
+  margin-right: 2px;
+}
+
+.share-btn {
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--text);
+  padding: 6px 14px;
+  border-radius: 16px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.share-btn:hover {
+  background: #f1f8e9;
+  border-color: var(--primary);
+}
+
+.related-articles {
+  margin-top: 46px;
+  padding-top: 30px;
+  border-top: 1px solid var(--border);
+}
+
+.related-articles h2 {
+  color: var(--primary-dark);
+  font-size: 1.3rem;
+  margin-bottom: 18px;
 }
 
 .article-content {
