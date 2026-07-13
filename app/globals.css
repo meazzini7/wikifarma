@@ -16,6 +16,8 @@ html,
 body {
   padding: 0;
   margin: 0;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 body {
@@ -23,6 +25,8 @@ body {
   background: var(--bg);
   color: var(--text);
   line-height: 1.5;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 a {
@@ -181,11 +185,30 @@ button {
 
 .search-input {
   width: 100%;
-  padding: 14px 18px;
+  padding: 14px 46px 14px 18px;
   border-radius: 30px;
   border: none;
   font-size: 1rem;
   outline: none;
+}
+
+.search-clear {
+  position: absolute;
+  top: 50%;
+  right: 16px;
+  transform: translateY(-50%);
+  border: none;
+  background: #e0e0e0;
+  color: #666;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .suggestions-box {
@@ -211,8 +234,16 @@ button {
   border-bottom: 1px solid #f0f0f0;
 }
 
-.suggestion-item:hover {
+.suggestion-item:hover,
+.suggestion-item.active {
   background: #f1f8e9;
+}
+
+.suggestion-item mark {
+  background: #c8e6c9;
+  color: var(--primary-dark);
+  border-radius: 3px;
+  padding: 0 1px;
 }
 
 .stats-row {
@@ -365,6 +396,7 @@ button {
 .feature-item {
   flex: 1;
   min-width: 280px;
+  max-width: 100%;
   background: #fff;
   padding: 30px;
   border-radius: 15px;
@@ -509,11 +541,76 @@ button {
 .article-content {
   line-height: 1.8;
   font-size: 1.05rem;
+  color: var(--text);
+}
+
+.article-content > *:first-child {
+  margin-top: 0;
+}
+
+.article-content p {
+  margin: 0 0 18px;
 }
 
 .article-content h2 {
   color: var(--primary-dark);
-  margin-top: 30px;
+  font-size: 1.4rem;
+  margin: 38px 0 14px;
+}
+
+.article-content h3 {
+  color: var(--primary-dark);
+  font-size: 1.15rem;
+  margin: 26px 0 10px;
+}
+
+.article-content ul,
+.article-content ol {
+  margin: 0 0 18px;
+  padding-left: 22px;
+}
+
+.article-content li {
+  margin-bottom: 6px;
+}
+
+.article-content a {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.article-content a:hover {
+  color: var(--primary-dark);
+}
+
+.article-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+.article-inline-img {
+  display: block;
+  width: 100%;
+  max-height: 380px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin: 36px 0;
+}
+
+.article-content table {
+  display: block;
+  overflow-x: auto;
+  max-width: 100%;
+  border-collapse: collapse;
+  margin: 0 0 18px;
+  font-size: 0.95rem;
+}
+
+.article-content table td,
+.article-content table th {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  white-space: normal;
 }
 
 .box-tip {
@@ -567,6 +664,7 @@ button {
 .tool-box {
   flex: 1;
   min-width: 300px;
+  max-width: 100%;
   background: #fff;
   padding: 20px;
   border-radius: 10px;
