@@ -28,7 +28,7 @@ export async function GET(request) {
   const category = isWellnessDay ? 'Benessere' : 'Problemi Frequenti';
   const promptBuilder = isWellnessDay ? buildWellnessPrompt : buildProblemsPrompt;
 
-  const topic = pickRandomTopic(topics);
+  const topic = await pickRandomTopic(topics);
   const result = await generateAndSaveArticle({
     topic,
     category,

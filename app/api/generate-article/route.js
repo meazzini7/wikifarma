@@ -4,13 +4,7 @@ import { requireAdmin } from '@/lib/verifyAdmin';
 import { buildAdminBlogPrompt, buildDrugPrompt } from '@/lib/prompts';
 import { buildArticleImages } from '@/lib/imageGen';
 import { insertInlineImage } from '@/lib/content';
-
-function cleanOutput(text) {
-  let t = text.replace(/```html/g, '').replace(/```/g, '');
-  const idx = t.indexOf('<h2>');
-  if (idx !== -1) t = t.slice(idx);
-  return t.trim();
-}
+import { cleanGeneratedContent } from '@/lib/cleanContent';
 
 export async function POST(request) {
   const isAdmin = await requireAdmin(request);
@@ -40,7 +34,7 @@ export async function POST(request) {
     if (!raw) {
       return NextResponse.json({ error: 'Risposta AI vuota.' }, { status: 502 });
     }
-    const content = cleanOutput(raw);
+    const content = cleanGeneratedContent(raw);
     const { cover, inline, fallback } = buildArticleImages(topic, category);
     const finalContent = insertInlineImage(content, inline, topic, fallback);
     return NextResponse.json({ content: finalContent, image_url: cover });
