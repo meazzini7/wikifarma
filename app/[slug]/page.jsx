@@ -3,10 +3,12 @@ import { notFound } from 'next/navigation';
 import Script from 'next/script';
 import { getPostBySlug, getRecommendedPosts } from '@/lib/firestore';
 import { ADSENSE_ID, SITE_URL } from '@/lib/constants';
+import { isTranslatable, SUPPORTED_LANGS } from '@/lib/translate';
 import SafeImage from '@/components/SafeImage';
 import FavoriteButton from '@/components/FavoriteButton';
 import ReadingTracker from '@/components/ReadingTracker';
 import ShareButtons from '@/components/ShareButtons';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 function stripHtml(html = '') {
   return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
@@ -18,11 +20,19 @@ export async function generateMetadata({ params }) {
 
   const description = stripHtml(post.content).slice(0, 160);
 
+  const languages = { 'x-default': `${SITE_URL}/${post.slug}` };
+  if (isTranslatable(post.category)) {
+    Object.keys(SUPPORTED_LANGS).forEach((code) => {
+      languages[code] = `${SITE_URL}/${code}/${post.slug}`;
+    });
+  }
+
   return {
     title: `${post.title} | WikiFarma`,
     description,
     alternates: {
       canonical: `/${post.slug}`,
+      languages,
     },
     openGraph: {
       title: post.title,
@@ -86,6 +96,7 @@ export default async function ArticlePage({ params }) {
       </Script>
       <ReadingTracker post={{ id: post.id, slug: post.slug, title: post.title, category: post.category }} />
       <div className="article-page">
+        {isTranslatable(post.category) && <LanguageSwitcher current="it" slug={post.slug} />}
         <h1 className="article-title">{post.title}</h1>
         <SafeImage
           src={post.image_url}

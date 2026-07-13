@@ -575,6 +575,34 @@ button {
   border-color: var(--primary);
 }
 
+.lang-switcher {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 16px;
+  font-size: 0.85rem;
+}
+
+.lang-link {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.lang-link:hover {
+  text-decoration: underline;
+}
+
+.lang-current {
+  color: #999;
+  font-weight: 700;
+}
+
+.lang-sep {
+  color: var(--border);
+  margin: 0 4px;
+}
+
 .related-articles {
   margin-top: 46px;
   padding-top: 30px;

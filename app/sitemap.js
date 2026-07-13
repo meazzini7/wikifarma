@@ -23,6 +23,7 @@ export default async function sitemap() {
   }));
 
   let postEntries = [];
+  let translationEntries = [];
   try {
     const snap = await getDocs(collection(db, 'posts'));
     postEntries = snap.docs.map((doc) => {
@@ -34,9 +35,27 @@ export default async function sitemap() {
         priority: 0.6,
       };
     });
+
+    // Only list translations already generated and cached - listing every
+    // possible language combination upfront would push Google to crawl (and
+    // therefore trigger, since translation happens on first request) many
+    // pages at once, risking Gemini rate limits. Cached translations grow
+    // in here naturally as real visitors/crawls generate them.
+    snap.docs.forEach((doc) => {
+      const data = doc.data();
+      if (!data.translations) return;
+      Object.keys(data.translations).forEach((lang) => {
+        translationEntries.push({
+          url: `${SITE_URL}/${lang}/${data.slug}`,
+          lastModified: data.translations_updated_at?.toDate?.() || new Date(),
+          changeFrequency: 'monthly',
+          priority: 0.5,
+        });
+      });
+    });
   } catch {
     // Firestore unreachable at build time - ship the static routes only.
   }
 
-  return [...staticEntries, ...postEntries];
+  return [...staticEntries, ...postEntries, ...translationEntries];
 }
