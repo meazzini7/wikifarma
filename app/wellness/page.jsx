@@ -20,7 +20,7 @@ export default async function WellnessPage() {
   return (
     <>
       <header className="hero" style={{ background: 'linear-gradient(135deg, #2e9e68 0%, #054d2e 100%)' }}>
-        <h1>WikiFarma: Stai Bene</h1>
+        <h1>WikiFarma: Benessere</h1>
         <p>Guide, Consigli e Prevenzione.</p>
       </header>
       <div className="section-home">
@@ -39,7 +39,7 @@ export default async function WellnessPage() {
                 />
                 <div className="card-body">
                   <div className="card-tag" style={{ background: '#054d2e' }}>
-                    Stai Bene
+                    Benessere
                   </div>
                   <h3>{post.title}</h3>
                   <p style={{ fontSize: 13, color: '#666', marginTop: 5 }}>{excerpt(post.content)}</p>
