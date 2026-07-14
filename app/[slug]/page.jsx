@@ -8,7 +8,6 @@ import SafeImage from '@/components/SafeImage';
 import FavoriteButton from '@/components/FavoriteButton';
 import ReadingTracker from '@/components/ReadingTracker';
 import ShareButtons from '@/components/ShareButtons';
-import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 function stripHtml(html = '') {
   return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
@@ -96,7 +95,6 @@ export default async function ArticlePage({ params }) {
       </Script>
       <ReadingTracker post={{ id: post.id, slug: post.slug, title: post.title, category: post.category }} />
       <div className="article-page">
-        {isTranslatable(post.category) && <LanguageSwitcher current="it" slug={post.slug} />}
         <h1 className="article-title">{post.title}</h1>
         <SafeImage
           src={post.image_url}
