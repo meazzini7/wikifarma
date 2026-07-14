@@ -35,7 +35,7 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Risposta AI vuota.' }, { status: 502 });
     }
     const content = cleanGeneratedContent(raw);
-    const { cover, inline, fallback } = buildArticleImages(topic, category);
+    const { cover, inline, fallback } = await buildArticleImages(topic, category);
     const finalContent = insertInlineImage(content, inline, topic, fallback);
     return NextResponse.json({ content: finalContent, image_url: cover });
   } catch {
