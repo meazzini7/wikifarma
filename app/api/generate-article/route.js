@@ -6,6 +6,8 @@ import { buildArticleImages } from '@/lib/imageGen';
 import { insertInlineImage } from '@/lib/content';
 import { cleanGeneratedContent } from '@/lib/cleanContent';
 
+export const maxDuration = 60;
+
 export async function POST(request) {
   const isAdmin = await requireAdmin(request);
   if (!isAdmin) {
@@ -30,12 +32,12 @@ export async function POST(request) {
 
   try {
     const prompt = type === 'drug' ? buildDrugPrompt(topic) : buildAdminBlogPrompt(topic);
-    const raw = await callGemini(prompt);
+    const [raw, images] = await Promise.all([callGemini(prompt), buildArticleImages(topic, category)]);
     if (!raw) {
       return NextResponse.json({ error: 'Risposta AI vuota.' }, { status: 502 });
     }
     const content = cleanGeneratedContent(raw);
-    const { cover, inline, fallback } = await buildArticleImages(topic, category);
+    const { cover, inline, fallback } = images;
     const finalContent = insertInlineImage(content, inline, topic, fallback);
     return NextResponse.json({ content: finalContent, image_url: cover });
   } catch {
