@@ -50,7 +50,7 @@ lib/
                                  pool Unsplash curato come fallback (scelto per hash del titolo)
   content.js                    Inserimento immagine inline a meta' articolo (tra due paragrafi)
   cleanContent.js                Pulizia output Gemini (fence, doc HTML completo, preamboli)
-  cronTopics.js, cronAuth.js     Liste argomenti + verifica secret Vercel Cron
+  cronTopics.js, cronAuth.js     Liste argomenti + verifica secret cron esterno
   email.js                      Notifica Resend (degrada in silenzio se non configurata)
   verifyAdmin.js                 Verifica JWT Firebase (per gating /api/generate-article)
   gtag.js                        Helper eventi GA4 custom
@@ -79,7 +79,8 @@ Vedi `.env.example` per la lista completa. In sintesi:
 - `FIREBASE_ADMIN_CLIENT_EMAIL` / `FIREBASE_ADMIN_PRIVATE_KEY` — service account, **mai committare**, usato solo server-side dai cron
 - `GEMINI_API_KEY` — server-side, mai esposta al client
 - `RESEND_API_KEY`, `ADMIN_NOTIFICATION_EMAIL` — opzionali, email degrada in silenzio se assenti
-- `CRON_SECRET` — verificato contro l'header `Authorization` che Vercel invia automaticamente ai Cron Job
+- `CRON_SECRET` — verificato contro l'header `Authorization: Bearer` inviato da cron-job.org (servizio esterno
+  gratuito; Vercel Cron Jobs richiede piano Pro, non usato)
 
 ## Convenzioni codice
 - Componenti in `app/` (App Router), client component solo dove serve interattivita'/auth (`'use client'`)
