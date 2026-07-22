@@ -28,15 +28,19 @@ export async function GET(request) {
   const category = isWellnessDay ? 'Benessere' : 'Problemi Frequenti';
   const promptBuilder = isWellnessDay ? buildWellnessPrompt : buildProblemsPrompt;
 
-  const topic = await pickRandomTopic(topics);
-  const result = await generateAndSaveArticle({
-    topic,
-    category,
-    type: 'blog',
-    promptBuilder,
-    uniqueSuffix: Math.floor(1000 + Math.random() * 9000),
-  });
+  try {
+    const topic = await pickRandomTopic(topics);
+    const result = await generateAndSaveArticle({
+      topic,
+      category,
+      type: 'blog',
+      promptBuilder,
+      uniqueSuffix: Math.floor(1000 + Math.random() * 9000),
+    });
 
-  if (result.error) return NextResponse.json(result, { status: 502 });
-  return NextResponse.json(result);
+    if (result.error) return NextResponse.json(result, { status: 502 });
+    return NextResponse.json(result);
+  } catch (err) {
+    return NextResponse.json({ error: err.message || 'Errore sconosciuto.' }, { status: 500 });
+  }
 }

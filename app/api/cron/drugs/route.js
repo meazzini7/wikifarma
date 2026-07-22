@@ -16,19 +16,23 @@ export async function GET(request) {
     return NextResponse.json({ skipped: true, reason: 'GEMINI_API_KEY o Firebase Admin non configurati.' });
   }
 
-  const topic = await pickSequentialTopic(DRUG_TOPICS);
-  if (!topic) {
-    return NextResponse.json({ created: false, reason: 'Tutti i farmaci della lista sono già stati creati.' });
+  try {
+    const topic = await pickSequentialTopic(DRUG_TOPICS);
+    if (!topic) {
+      return NextResponse.json({ created: false, reason: 'Tutti i farmaci della lista sono già stati creati.' });
+    }
+
+    const result = await generateAndSaveArticle({
+      topic,
+      category: 'Farmaco',
+      type: 'drug',
+      promptBuilder: buildDrugPrompt,
+      uniqueSuffix: Date.now(),
+    });
+
+    if (result.error) return NextResponse.json(result, { status: 502 });
+    return NextResponse.json(result);
+  } catch (err) {
+    return NextResponse.json({ error: err.message || 'Errore sconosciuto.' }, { status: 500 });
   }
-
-  const result = await generateAndSaveArticle({
-    topic,
-    category: 'Farmaco',
-    type: 'drug',
-    promptBuilder: buildDrugPrompt,
-    uniqueSuffix: Date.now(),
-  });
-
-  if (result.error) return NextResponse.json(result, { status: 502 });
-  return NextResponse.json(result);
 }
