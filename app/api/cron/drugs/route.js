@@ -30,9 +30,13 @@ export async function GET(request) {
       uniqueSuffix: Date.now(),
     });
 
-    if (result.error) return NextResponse.json(result, { status: 502 });
+    if (result.error) {
+      console.error('/api/cron/drugs fallito:', result.error);
+      return NextResponse.json(result, { status: 502 });
+    }
     return NextResponse.json(result);
   } catch (err) {
+    console.error('/api/cron/drugs eccezione:', err);
     return NextResponse.json({ error: err.message || 'Errore sconosciuto.' }, { status: 500 });
   }
 }
