@@ -9,6 +9,14 @@ import FavoriteButton from '@/components/FavoriteButton';
 import ReadingTracker from '@/components/ReadingTracker';
 import ShareButtons from '@/components/ShareButtons';
 
+// Senza generateStaticParams ogni pagina articolo viene renderizzata a
+// richiesta (query Firestore comprese) - senza una cache, questo succede
+// ad ogni singola visita, la fonte piu' pesante di consumo CPU su Vercel
+// dato che sono le pagine piu' visitate del sito. Gli articoli cambiano di
+// fatto solo quando generati o editati da admin, mai in tempo reale, quindi
+// un'ora di cache e' sicura.
+export const revalidate = 3600;
+
 function stripHtml(html = '') {
   return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 }

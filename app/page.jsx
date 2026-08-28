@@ -4,7 +4,12 @@ import SafeImage from '@/components/SafeImage';
 import { getHomeStats, getRecentPosts } from '@/lib/firestore';
 import { getDisplayVisitorCount } from '@/lib/visitorCounter';
 
-export const dynamic = 'force-dynamic';
+// ISR invece di rendering dinamico ad ogni richiesta: il contenuto cambia
+// solo con i cron (2 volte al giorno), quindi una cache di 30 minuti non
+// perde nulla in freschezza e evita di ricalcolare la homepage (query
+// Firestore comprese) ad ogni singola visita - risparmio di CPU rilevante
+// visto che e' la pagina piu' visitata del sito.
+export const revalidate = 1800;
 
 export default async function HomePage() {
   const [stats, recent] = await Promise.all([getHomeStats(), getRecentPosts(9)]);
