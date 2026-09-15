@@ -36,9 +36,15 @@ export async function generateMetadata({ params }) {
   const translated = await getOrCreateTranslation(post, lang);
   if (!translated) return {};
 
+  // Solo le lingue gia' in cache (piu' quella appena servita in questa
+  // richiesta) vanno in hreflang - stesso motivo di app/[slug]/page.jsx:
+  // non invitare i crawler a generare le altre 2-3 traduzioni mancanti
+  // solo per essere indicizzate.
   const languages = { it: `${SITE_URL}/${slug}`, 'x-default': `${SITE_URL}/${slug}` };
   Object.keys(SUPPORTED_LANGS).forEach((code) => {
-    languages[code] = `${SITE_URL}/${code}/${slug}`;
+    if (code === lang || post.translations?.[code]) {
+      languages[code] = `${SITE_URL}/${code}/${slug}`;
+    }
   });
 
   return {

@@ -27,10 +27,18 @@ export async function generateMetadata({ params }) {
 
   const description = stripHtml(post.content).slice(0, 160);
 
+  // Solo le lingue gia' tradotte (cache su post.translations) finiscono nei
+  // tag hreflang: pubblicizzare tutte e 4 le lingue per ogni articolo
+  // invitava i crawler a visitare sistematicamente ogni combinazione
+  // articolo x lingua, generando traduzioni nuove (chiamata Gemini +
+  // scrittura Firestore) solo per essere indicizzate, non per traffico
+  // reale - la causa principale del consumo CPU/quota fuori scala.
   const languages = { 'x-default': `${SITE_URL}/${post.slug}` };
   if (isTranslatable(post.category)) {
     Object.keys(SUPPORTED_LANGS).forEach((code) => {
-      languages[code] = `${SITE_URL}/${code}/${post.slug}`;
+      if (post.translations?.[code]) {
+        languages[code] = `${SITE_URL}/${code}/${post.slug}`;
+      }
     });
   }
 
