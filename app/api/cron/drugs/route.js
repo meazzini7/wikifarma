@@ -16,6 +16,18 @@ export async function GET(request) {
     return NextResponse.json({ skipped: true, reason: 'GEMINI_API_KEY o Firebase Admin non configurati.' });
   }
 
+  // Generazione dimezzata su richiesta esplicita (contenere CPU/quota e dare
+  // priorita' alla qualita' sul volume): farmaci nei giorni pari, benessere/
+  // problemi (vedi api/cron/content) nei giorni dispari - un solo articolo
+  // al giorno in totale invece di due. Il cron-job.org esterno continua a
+  // chiamare questa route ogni giorno; e' la route stessa a saltare.
+  const dayOfYear = Math.floor(
+    (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000
+  );
+  if (dayOfYear % 2 !== 0) {
+    return NextResponse.json({ skipped: true, reason: 'Generazione farmaci a giorni alterni: oggi tocca a benessere/problemi.' });
+  }
+
   try {
     const topic = await pickSequentialTopic(DRUG_TOPICS);
     if (!topic) {

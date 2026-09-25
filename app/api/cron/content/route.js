@@ -8,9 +8,10 @@ import { generateAndSaveArticle, pickRandomTopic } from '@/lib/articleGenerator'
 
 export const maxDuration = 60;
 
-// Alterna Benessere/Problemi Frequenti in base al giorno dell'anno, per
-// coprire entrambe le categorie restando a 2 cron job totali nel progetto
-// (il piano Vercel Hobby ne permette al massimo 2 al giorno).
+// Gira nei giorni dispari (i farmaci, vedi api/cron/drugs, nei giorni pari):
+// un solo articolo al giorno in totale invece di due, su richiesta esplicita
+// per contenere CPU/quota Gemini e dare priorita' alla qualita' sul volume.
+// Nei giorni in cui gira, alterna comunque Benessere/Problemi Frequenti.
 export async function GET(request) {
   if (!isAuthorizedCron(request)) {
     return NextResponse.json({ error: 'Non autorizzato.' }, { status: 401 });
@@ -22,7 +23,10 @@ export async function GET(request) {
   const dayOfYear = Math.floor(
     (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000
   );
-  const isWellnessDay = dayOfYear % 2 === 0;
+  if (dayOfYear % 2 === 0) {
+    return NextResponse.json({ skipped: true, reason: 'Generazione benessere/problemi a giorni alterni: oggi tocca ai farmaci.' });
+  }
+  const isWellnessDay = Math.floor(dayOfYear / 2) % 2 === 0;
 
   const topics = isWellnessDay ? WELLNESS_TOPICS : PROBLEMS_TOPICS;
   const category = isWellnessDay ? 'Benessere' : 'Problemi Frequenti';

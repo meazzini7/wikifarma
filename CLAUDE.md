@@ -110,7 +110,9 @@ Vedi `.env.example` per la lista completa. In sintesi:
 2. ✅ Enciclopedia A-Z + pagina articolo singolo (JSON-LD, canonical, correlati, condivisione)
 3. ✅ Diagnosi AI (Gemini server-side) + storico utente + preferiti + "Per Te"
 4. ✅ Pannello Admin (solo `meazzini7@gmail.com`): generazione articoli, eliminazione per intervallo/selezione
-5. ✅ Cron generazione automatica (2/giorno, farmaci + benessere/problemi alternati) + email Resend
+5. ✅ Cron generazione automatica (1/giorno: farmaci nei giorni pari, benessere/problemi alternati nei giorni
+   dispari - ridotto da 2/giorno su richiesta esplicita per contenere CPU/quota e dare priorità alla qualità
+   sul volume) + email Resend
 6. ✅ AdSense (Auto ads), GA4 (+ eventi custom: search, diagnosis_completed, favorite_added), ads.txt, privacy, sitemap.xml, robots.txt
 
 Prossimi passi aperti: nessuna fase strutturale mancante: eventuali richieste sono miglioramenti
