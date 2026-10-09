@@ -6,10 +6,11 @@ import { getDisplayVisitorCount } from '@/lib/visitorCounter';
 
 // ISR invece di rendering dinamico ad ogni richiesta: il contenuto cambia
 // solo con i cron (2 volte al giorno), quindi una cache di 30 minuti non
-// perde nulla in freschezza e evita di ricalcolare la homepage (query
-// Firestore comprese) ad ogni singola visita - risparmio di CPU rilevante
-// visto che e' la pagina piu' visitata del sito.
-export const revalidate = 1800;
+// perde nulla in freschezza (il cron genera 1 solo articolo/giorno) e
+// evita di ricalcolare la homepage (query Firestore comprese) ad ogni
+// singola visita - risparmio di CPU rilevante visto che e' la pagina
+// piu' visitata del sito.
+export const revalidate = 3600;
 
 export default async function HomePage() {
   const [stats, recent] = await Promise.all([getHomeStats(), getRecentPosts(9)]);
@@ -42,7 +43,7 @@ export default async function HomePage() {
           <h2>Esplora le Categorie</h2>
         </div>
         <div className="cat-grid">
-          <Link href="/encyclopedia" className="cat-box">
+          <Link href="/encyclopedia/A" className="cat-box">
             <span className="cat-icon">💊</span>
             <div className="cat-title">Medicinali A-Z</div>
             <div className="cat-desc">Schede tecniche.</div>

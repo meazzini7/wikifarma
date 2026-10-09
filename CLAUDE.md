@@ -23,7 +23,8 @@ poi migliorata dove il vecchio codice aveva bug conosciuti (vedi "Bug ereditati 
 app/
   page.jsx                    Homepage (hero, ricerca live, contatori, ultimi articoli)
   [slug]/page.jsx             Pagina articolo (dinamica, JSON-LD, canonical, correlati, condivisione)
-  encyclopedia/page.jsx       Enciclopedia A-Z
+  encyclopedia/page.jsx       Redirect a /encyclopedia/[letter] (compat per i vecchi link ?let=X)
+  encyclopedia/[letter]/page.jsx  Enciclopedia A-Z, statica (generateStaticParams, 26 lettere)
   wellness/page.jsx           Guide benessere (type=blog, category=Benessere)
   problems/page.jsx           Problemi frequenti (category=Problemi Frequenti)
   diagnosis/page.jsx          Diagnosi AI (client component, chiama /api/diagnose)
@@ -31,10 +32,9 @@ app/
   per-te/page.jsx             Raccomandazioni personalizzate (preferiti + cronologia letture)
   admin/page.jsx              Pannello admin protetto (generazione articoli, eliminazione)
   privacy/, contact/          Pagine statiche
-  sitemap.js, robots.js       SEO tecnico (sitemap dinamica da Firestore, revalidate 1h)
+  sitemap.js, robots.js       SEO tecnico (sitemap dinamica da Firestore, revalidate 3h)
   api/diagnose/               Gemini server-side per la diagnosi
   api/generate-article/       Generazione manuale da admin panel (protetta da lib/verifyAdmin.js)
-  api/search/                 Ricerca live (prefix match su title_lower)
   api/track-visit/            Contatore visite privacy-friendly (IP hashato)
   api/cron/drugs/             Cron farmaci (lista prioritaria, sequenziale, dedup)
   api/cron/content/           Cron benessere/problemi (alterna per giorno, random+dedup)
@@ -58,7 +58,8 @@ lib/
 
 components/
   Navbar.jsx, Footer.jsx        Layout globale (menu mobile hamburger)
-  LiveSearch.jsx                 Ricerca live con navigazione da tastiera
+  LiveSearch.jsx                 Ricerca live con navigazione da tastiera (query diretta a Firestore
+                                  dal client, nessuna funzione serverless dedicata)
   SafeImage.jsx                  Immagine con fallback a cascata (generata -> pool -> placeholder)
   FavoriteButton.jsx, ShareButtons.jsx, ReadingTracker.jsx
   GAListener.jsx, VisitorTracker.jsx

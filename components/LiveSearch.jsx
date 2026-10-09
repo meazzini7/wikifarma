@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { trackEvent } from '@/lib/gtag';
+import { searchPosts } from '@/lib/firestore';
 
 function highlightMatch(title, query) {
   const idx = title.toLowerCase().indexOf(query.toLowerCase());
@@ -34,26 +35,29 @@ export default function LiveSearch() {
       return;
     }
     setLoading(true);
-    const controller = new AbortController();
+    let cancelled = false;
     const t = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`, {
-          signal: controller.signal,
-        });
-        const data = await res.json();
+        // Query diretta a Firestore dal browser invece che via /api/search:
+        // searchPosts usa l'SDK client (lettura pubblica, gia' permessa
+        // dalle regole), quindi non serve passare da una funzione
+        // serverless per ogni ricerca - un invocazione Vercel in meno ad
+        // ogni tasto premuto.
+        const data = await searchPosts(query);
+        if (cancelled) return;
         setResults(data);
         setActiveIndex(-1);
         setOpen(true);
         trackEvent('search', { search_term: query, results_count: data.length });
       } catch {
-        // ignore aborted/failed requests
+        // ignore failed requests
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }, 200);
     return () => {
+      cancelled = true;
       clearTimeout(t);
-      controller.abort();
     };
   }, [q]);
 

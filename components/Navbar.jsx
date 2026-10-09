@@ -51,7 +51,7 @@ export default function Navbar() {
         </button>
 
         <div className={`nav-links${menuOpen ? ' open' : ''}`}>
-          <Link href="/encyclopedia">Medicinali dalla A alla Z</Link>
+          <Link href="/encyclopedia/A">Medicinali dalla A alla Z</Link>
           <Link href="/wellness" style={{ color: 'var(--primary-dark)', fontWeight: 600 }}>
             Benessere
           </Link>

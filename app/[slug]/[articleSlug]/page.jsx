@@ -13,9 +13,9 @@ const DISCLAIMERS = {
 
 // Stesso ragionamento della pagina italiana (vedi app/[slug]/page.jsx):
 // senza cache, ogni visita rifà la query Firestore e, se la traduzione non
-// è già in cache su Firestore, anche una chiamata Gemini - un'ora di ISR
-// evita entrambe le cose per le richieste ripetute.
-export const revalidate = 3600;
+// è già in cache su Firestore, anche una chiamata Gemini - 2 ore di ISR
+// evitano entrambe le cose per le richieste ripetute.
+export const revalidate = 7200;
 
 function stripHtml(html = '') {
   return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();

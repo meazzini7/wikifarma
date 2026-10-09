@@ -2,11 +2,13 @@ import { collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { SITE_URL } from '@/lib/constants';
 
-export const revalidate = 3600; // regenerate at most once an hour
+export const revalidate = 10800; // ora che il cron genera 1 articolo/giorno invece di 2, 3h di cache bastano
+
+const LETTERS = Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i));
 
 const STATIC_ROUTES = [
   { path: '', priority: 1, changeFrequency: 'daily' },
-  { path: 'encyclopedia', priority: 0.9, changeFrequency: 'daily' },
+  ...LETTERS.map((l) => ({ path: `encyclopedia/${l}`, priority: 0.7, changeFrequency: 'weekly' })),
   { path: 'wellness', priority: 0.8, changeFrequency: 'daily' },
   { path: 'problems', priority: 0.8, changeFrequency: 'daily' },
   { path: 'diagnosis', priority: 0.7, changeFrequency: 'monthly' },

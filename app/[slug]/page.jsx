@@ -14,8 +14,8 @@ import ShareButtons from '@/components/ShareButtons';
 // ad ogni singola visita, la fonte piu' pesante di consumo CPU su Vercel
 // dato che sono le pagine piu' visitate del sito. Gli articoli cambiano di
 // fatto solo quando generati o editati da admin, mai in tempo reale, quindi
-// un'ora di cache e' sicura.
-export const revalidate = 3600;
+// 2 ore di cache sono sicure.
+export const revalidate = 7200;
 
 function stripHtml(html = '') {
   return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
