@@ -1,18 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { trackArticleEvent } from '@/lib/stats';
 
-export default function ShareButtons({ url, title, postId }) {
+export default function ShareButtons({ url, title }) {
   const [copied, setCopied] = useState(false);
 
   const encodedUrl = encodeURIComponent(url);
   const encodedTitle = encodeURIComponent(title);
 
-  const countShare = () => trackArticleEvent(postId, ['shares']);
-
   async function handleCopy() {
-    countShare();
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);
@@ -30,7 +26,6 @@ export default function ShareButtons({ url, title, postId }) {
         target="_blank"
         rel="noopener noreferrer"
         className="share-btn"
-        onClick={countShare}
         aria-label="Condividi su WhatsApp"
       >
         WhatsApp
@@ -40,7 +35,6 @@ export default function ShareButtons({ url, title, postId }) {
         target="_blank"
         rel="noopener noreferrer"
         className="share-btn"
-        onClick={countShare}
         aria-label="Condividi su Facebook"
       >
         Facebook
@@ -50,7 +44,6 @@ export default function ShareButtons({ url, title, postId }) {
         target="_blank"
         rel="noopener noreferrer"
         className="share-btn"
-        onClick={countShare}
         aria-label="Condividi su X"
       >
         X

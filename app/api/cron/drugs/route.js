@@ -5,7 +5,7 @@ import { isGeminiConfigured } from '@/lib/gemini';
 import { buildDrugPrompt } from '@/lib/prompts';
 import { DRUG_TOPICS } from '@/lib/cronTopics';
 import { generateAndSaveArticle, pickSequentialTopic } from '@/lib/articleGenerator';
-import { chooseDrugTopic, getStrategy } from '@/lib/strategy';
+import { chooseDrugTopic, getGenerationPlan } from '@/lib/strategy';
 
 export const maxDuration = 60;
 
@@ -30,10 +30,10 @@ export async function GET(request) {
   }
 
   try {
-    // La strategia (appresa dalle performance) e' opzionale: se manca o
-    // fallisce la lettura si segue la lista storica come prima.
-    const strategy = await getStrategy().catch(() => null);
-    const chosen = await chooseDrugTopic({ strategy }).catch(() => null);
+    // Il piano (pesi appresi da GA4) e' opzionale: senza dati sufficienti, o
+    // in caso di errore, si segue la lista storica come prima.
+    const plan = await getGenerationPlan();
+    const chosen = await chooseDrugTopic({ plan }).catch(() => null);
     const topic = chosen ? chosen.topic : await pickSequentialTopic(DRUG_TOPICS);
     if (!topic) {
       return NextResponse.json({ created: false, reason: 'Tutti i farmaci della lista sono già stati creati.' });
@@ -45,7 +45,7 @@ export async function GET(request) {
       type: 'drug',
       promptBuilder: buildDrugPrompt,
       uniqueSuffix: Date.now(),
-      brief: strategy?.focus_brief,
+      brief: chosen ? plan.brief : undefined,
       genMode: chosen ? 'exploit' : 'explore',
     });
 

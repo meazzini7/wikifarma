@@ -10,6 +10,7 @@ export default function GAListener() {
 
   useEffect(() => {
     if (typeof window === 'undefined' || typeof window.gtag !== 'function') return;
+    if (pathname?.startsWith('/admin')) return;
     const query = searchParams?.toString();
     const page_path = query ? `${pathname}?${query}` : pathname;
     window.gtag('config', GA_ID, { page_path });

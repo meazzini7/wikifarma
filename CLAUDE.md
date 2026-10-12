@@ -56,10 +56,11 @@ lib/
   email.js                      Notifica Resend (degrada in silenzio se non configurata)
   verifyAdmin.js                 Verifica JWT Firebase (per gating /api/generate-article)
   gtag.js                        Helper eventi GA4 custom
-  stats.js                       Contatori anonimi per articolo scritti dal browser (article_stats)
-  performance.js                 Motore di valutazione puro: punteggi, temi, raccomandazioni, scelta pesata
-  performanceData.js             Lettura Admin SDK di posts + article_stats per la valutazione
-  strategy.js                    Strategia appresa (strategy/current): brief editoriale, idee, pesi per tema
+  ga4.js                         Client GA4 Data API (runReport) col service account di Firebase Admin
+  insights.js                    Valutazione da GA4: punteggio prima settimana, gruppi, pesi, soglie, cache 12h
+  performance.js                 Classificazione pura: tema (classifyTopic), stile del titolo, scelta pesata
+  performanceData.js             Lettura Admin SDK dei metadati degli articoli
+  strategy.js                    Piano di generazione: pesi da GA4 + brief/idee Gemini settimanali (strategy/current)
   constants.js                   ADMIN_EMAIL, SITE_URL, GA_ID, ADSENSE_ID, PLACEHOLDER_IMAGE
 
 components/
@@ -69,7 +70,7 @@ components/
   SafeImage.jsx                  Immagine con fallback a cascata (generata -> pool -> placeholder)
   FavoriteButton.jsx, ShareButtons.jsx, ReadingTracker.jsx
   GAListener.jsx, VisitorTracker.jsx
-  ArticleTracker.jsx             Misura visita, lettura 30s e scroll 75% per articolo (-> lib/stats.js)
+  GoogleAnalytics.jsx            Script GA4, escluso sotto /admin (le visite admin non sporcano i dati)
   InsightsView.jsx               Parte visiva del pannello /admin/insights
 ```
 
@@ -81,32 +82,11 @@ components/
 - `favorites` — preferiti (`userEmail`, `postId`, `slug`, `title`, `category`). Doc ID: `{userEmail}_{postId}`.
 - `reading_history` — proxy per interesse utente (view count per post, non tempo di lettura preciso).
 - `daily_visitors` — contatore visite anonimizzato (hash IP, non IP in chiaro).
-- `article_stats` — contatori anonimi per articolo (doc ID = id del post): `views`, `engaged` (30s+ con scheda
-  visibile), `deep` (scroll 75%), `shares`, `favs`, `views_intl` (visite alle versioni tradotte). Scritti dal browser
-  con incrementi di +1 (nessuna funzione Vercel); NON leggibili dal client, solo Admin SDK. Misure proprie attive
-  dal 12/10/2026 (`TRACKING_START_MS` in `lib/performance.js`): prima c'e' solo GA4.
-- `strategy` — doc `current`: strategia editoriale appresa (pesi per tema, brief, idee, farmaci da anticipare).
-  Solo Admin SDK. Ricostruita ogni 7 giorni nel giorno libero della route cron/content, o dal pannello insights.
-
-### Regole Firestore da pubblicare per `article_stats` (dentro `match /databases/{database}/documents`)
-```
-function statsDelta(prev, field) {
-  return request.resource.data.get(field, 0) - prev.get(field, 0);
-}
-function validStatsWrite(prev) {
-  return request.resource.data.keys().hasOnly(['views','engaged','deep','shares','favs','views_intl'])
-    && statsDelta(prev,'views') in [0,1] && statsDelta(prev,'engaged') in [0,1]
-    && statsDelta(prev,'deep') in [0,1] && statsDelta(prev,'shares') in [0,1]
-    && statsDelta(prev,'favs') in [0,1] && statsDelta(prev,'views_intl') in [0,1];
-}
-match /article_stats/{postId} {
-  allow read, delete: if false;
-  allow create: if validStatsWrite({});
-  allow update: if validStatsWrite(resource.data);
-}
-```
-Limite noto: chiunque puo' scrivere +1 a mano (i bot che eseguono JS e gli script); i numeri sono un segnale
-relativo per classificare, non una contabilita' esatta.
+- `analytics` — doc `insights`: snapshot della valutazione da GA4 (JSON in `report_json`, `schemaVersion`,
+  `generated_at`). Cache di 12h; se GA4 non risponde si usa l'ultimo snapshot buono. Solo Admin SDK.
+- `strategy` — doc `current`: parte qualitativa della strategia (brief editoriale, idee di titolo, farmaci da
+  anticipare, titoli vincenti/perdenti come esempi). Ricostruita ogni 7 giorni nel giorno libero della route
+  cron/content, o dal pannello insights. Solo Admin SDK. I post hanno anche `gen_mode` (`exploit`|`explore`).
 
 ## Variabili d'ambiente (Vercel)
 Vedi `.env.example` per la lista completa. In sintesi:
@@ -114,6 +94,9 @@ Vedi `.env.example` per la lista completa. In sintesi:
 - `FIREBASE_ADMIN_CLIENT_EMAIL` / `FIREBASE_ADMIN_PRIVATE_KEY` — service account, **mai committare**, usato solo server-side dai cron
 - `GEMINI_API_KEY` — server-side, mai esposta al client
 - `RESEND_API_KEY`, `ADMIN_NOTIFICATION_EMAIL` — opzionali, email degrada in silenzio se assenti
+- `GA4_PROPERTY_ID` — ID numerico della PROPRIETA' GA4 (Analytics > Amministrazione > Impostazioni proprieta'),
+  non l'ID stream ne' l'ID misurazione G-XXXX. Serve anche: Google Analytics Data API abilitata nel progetto GCP e
+  `FIREBASE_ADMIN_CLIENT_EMAIL` aggiunto come Visualizzatore nella proprieta' GA4.
 - `CRON_SECRET` — verificato contro l'header `Authorization: Bearer` inviato da cron-job.org (servizio esterno
   gratuito; Vercel Cron Jobs richiede piano Pro, non usato)
 
@@ -150,12 +133,15 @@ Vedi `.env.example` per la lista completa. In sintesi:
    sul volume) + email Resend
 6. ✅ AdSense (Auto ads), GA4 (+ eventi custom: search, diagnosis_completed, favorite_added), ads.txt, privacy, sitemap.xml, robots.txt
 
-7. ✅ Ciclo di apprendimento: misure proprie per articolo -> punteggio (lettura reale, non solo visite) ->
-   strategia settimanale (`lib/strategy.js`) che orienta la generazione: con probabilita' `exploit_prob`
-   (35-65% a seconda dei dati disponibili, mai meno del 35% di esplorazione casuale) l'argomento e' scelto dai temi
-   che rendono e dalle idee generate; il `brief` editoriale entra nel prompt. Ogni articolo salva `gen_mode`
-   (`exploit`|`explore`) cosi' il pannello misura se la strategia batte il caso. Pannello: `/admin/insights`.
-   Il "valore" per tema (`cpc` in `lib/performance.js`) e' una STIMA, da sostituire con gli RPM reali di AdSense.
+7. ✅ Ciclo di apprendimento da GA4 (`lib/ga4.js`, `lib/insights.js`, `lib/strategy.js`): punteggio sulla PRIMA
+   settimana di vita di ogni articolo (visite x (1 + min(secondi di lettura, 180)/60)), stati provvisorio/
+   confrontabile (7-120 gg, solo se creato dopo il lancio del sito 13/07/2026)/datato, gruppi per tema, stile del
+   titolo e categoria con shrinkage verso la media (K=3), peso = indice limitato a 0,4-2,5. L'apprendimento si attiva
+   solo con >=6 articoli confrontabili e >=25 visite di prima settimana; sotto soglia tutto resta casuale. Quando e'
+   attivo, il 75% delle generazioni (categoria + argomento) segue i pesi e riceve nel prompt il brief editoriale con
+   titoli vincenti/perdenti; il 25% resta sempre casuale. `gen_mode` permette al pannello di misurare se la
+   strategia batte il caso. Pannello riservato: `/admin/insights` (login Google admin, dati via API che verifica il
+   JWT). Il traffico `/admin` e' escluso da GA.
 
 Prossimi passi aperti: nessuna fase strutturale mancante: eventuali richieste sono miglioramenti
 incrementali (i18n, performance, nuove feature) da trattare come task a se stanti.

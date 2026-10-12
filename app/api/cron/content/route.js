@@ -5,7 +5,7 @@ import { isGeminiConfigured } from '@/lib/gemini';
 import { buildProblemsPrompt, buildWellnessPrompt } from '@/lib/prompts';
 import { PROBLEMS_TOPICS, WELLNESS_TOPICS } from '@/lib/cronTopics';
 import { generateAndSaveArticle, pickRandomTopic } from '@/lib/articleGenerator';
-import { chooseContentTopic, getStrategy, refreshStrategyIfStale } from '@/lib/strategy';
+import { chooseCategory, chooseContentTopic, getGenerationPlan, refreshStrategyIfStale } from '@/lib/strategy';
 
 export const maxDuration = 60;
 
@@ -40,17 +40,18 @@ export async function GET(request) {
       strategy: strategyRefresh,
     });
   }
-  const isWellnessDay = Math.floor(dayOfYear / 2) % 2 === 0;
-
-  const topics = isWellnessDay ? WELLNESS_TOPICS : PROBLEMS_TOPICS;
-  const category = isWellnessDay ? 'Benessere' : 'Problemi Frequenti';
-  const promptBuilder = isWellnessDay ? buildWellnessPrompt : buildProblemsPrompt;
+  const defaultCategory = Math.floor(dayOfYear / 2) % 2 === 0 ? 'Benessere' : 'Problemi Frequenti';
 
   try {
-    // La strategia (appresa dalle performance) e' opzionale: se manca o
-    // fallisce la lettura si genera esattamente come prima.
-    const strategy = await getStrategy().catch(() => null);
-    const chosen = await chooseContentTopic({ category, topics, strategy }).catch(() => null);
+    // Il piano (pesi appresi da GA4) e' opzionale: senza dati sufficienti, o
+    // in caso di qualsiasi errore, si genera a caso esattamente come prima.
+    const plan = await getGenerationPlan();
+    const category = chooseCategory(plan, defaultCategory);
+    const isWellness = category === 'Benessere';
+    const topics = isWellness ? WELLNESS_TOPICS : PROBLEMS_TOPICS;
+    const promptBuilder = isWellness ? buildWellnessPrompt : buildProblemsPrompt;
+
+    const chosen = await chooseContentTopic({ category, topics, plan }).catch(() => null);
     const topic = chosen ? chosen.topic : await pickRandomTopic(topics);
     const result = await generateAndSaveArticle({
       topic,
@@ -58,7 +59,7 @@ export async function GET(request) {
       type: 'blog',
       promptBuilder,
       uniqueSuffix: Math.floor(1000 + Math.random() * 9000),
-      brief: strategy?.focus_brief,
+      brief: chosen ? plan.brief : undefined,
       genMode: chosen ? 'exploit' : 'explore',
     });
 

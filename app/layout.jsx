@@ -1,11 +1,11 @@
 import { Suspense } from 'react';
-import Script from 'next/script';
 import './globals.css';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import VisitorTracker from '@/components/VisitorTracker';
 import GAListener from '@/components/GAListener';
-import { GA_ID, SITE_URL } from '@/lib/constants';
+import GoogleAnalytics from '@/components/GoogleAnalytics';
+import { SITE_URL } from '@/lib/constants';
 
 export const metadata = {
   metadataBase: new URL(SITE_URL),
@@ -18,18 +18,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="it">
       <body>
-        <Script
-          src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
-          strategy="afterInteractive"
-        />
-        <Script id="ga4-init" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', '${GA_ID}');
-          `}
-        </Script>
+        <GoogleAnalytics />
         <Suspense fallback={null}>
           <GAListener />
         </Suspense>

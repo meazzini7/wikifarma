@@ -7,7 +7,6 @@ import { isTranslatable, SUPPORTED_LANGS } from '@/lib/translate';
 import SafeImage from '@/components/SafeImage';
 import FavoriteButton from '@/components/FavoriteButton';
 import ReadingTracker from '@/components/ReadingTracker';
-import ArticleTracker from '@/components/ArticleTracker';
 import ShareButtons from '@/components/ShareButtons';
 
 // Senza generateStaticParams ogni pagina articolo viene renderizzata a
@@ -111,7 +110,6 @@ export default async function ArticlePage({ params }) {
         {JSON.stringify(jsonLd)}
       </Script>
       <ReadingTracker post={{ id: post.id, slug: post.slug, title: post.title, category: post.category }} />
-      <ArticleTracker postId={post.id} />
       <div className="article-page">
         <h1 className="article-title">{post.title}</h1>
         <SafeImage
@@ -131,7 +129,7 @@ export default async function ArticlePage({ params }) {
               image_url: post.image_url || null,
             }}
           />
-          <ShareButtons url={url} title={post.title} postId={post.id} />
+          <ShareButtons url={url} title={post.title} />
         </div>
 
         {/* Contenuto generato dall'admin panel AI (fase 7): sorgente attendibile, non input utente. */}
