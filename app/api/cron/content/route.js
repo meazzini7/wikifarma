@@ -5,6 +5,7 @@ import { isGeminiConfigured } from '@/lib/gemini';
 import { buildProblemsPrompt, buildWellnessPrompt } from '@/lib/prompts';
 import { PROBLEMS_TOPICS, WELLNESS_TOPICS } from '@/lib/cronTopics';
 import { generateAndSaveArticle, pickRandomTopic } from '@/lib/articleGenerator';
+import { chooseContentTopic, getStrategy, refreshStrategyIfStale } from '@/lib/strategy';
 
 export const maxDuration = 60;
 
@@ -24,7 +25,20 @@ export async function GET(request) {
     (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000
   );
   if (dayOfYear % 2 === 0) {
-    return NextResponse.json({ skipped: true, reason: 'Generazione benessere/problemi a giorni alterni: oggi tocca ai farmaci.' });
+    // Giorno libero di questa route: se la strategia editoriale e' scaduta
+    // (o non esiste ancora) la ricostruiamo ora, con tutto il tempo a
+    // disposizione, cosi' i giorni di generazione si limitano a leggerla.
+    let strategyRefresh = null;
+    try {
+      strategyRefresh = await refreshStrategyIfStale();
+    } catch (err) {
+      console.error('/api/cron/content: aggiornamento strategia fallito:', err);
+    }
+    return NextResponse.json({
+      skipped: true,
+      reason: 'Generazione benessere/problemi a giorni alterni: oggi tocca ai farmaci.',
+      strategy: strategyRefresh,
+    });
   }
   const isWellnessDay = Math.floor(dayOfYear / 2) % 2 === 0;
 
@@ -33,13 +47,19 @@ export async function GET(request) {
   const promptBuilder = isWellnessDay ? buildWellnessPrompt : buildProblemsPrompt;
 
   try {
-    const topic = await pickRandomTopic(topics);
+    // La strategia (appresa dalle performance) e' opzionale: se manca o
+    // fallisce la lettura si genera esattamente come prima.
+    const strategy = await getStrategy().catch(() => null);
+    const chosen = await chooseContentTopic({ category, topics, strategy }).catch(() => null);
+    const topic = chosen ? chosen.topic : await pickRandomTopic(topics);
     const result = await generateAndSaveArticle({
       topic,
       category,
       type: 'blog',
       promptBuilder,
       uniqueSuffix: Math.floor(1000 + Math.random() * 9000),
+      brief: strategy?.focus_brief,
+      genMode: chosen ? 'exploit' : 'explore',
     });
 
     if (result.error) {

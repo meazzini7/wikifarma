@@ -5,6 +5,7 @@ import { onAuthStateChanged, signInWithPopup } from 'firebase/auth';
 import { getFirebaseAuth, googleProvider } from '@/lib/firebase';
 import { addFavorite, isFavorited, removeFavorite } from '@/lib/favorites';
 import { trackEvent } from '@/lib/gtag';
+import { trackArticleEvent } from '@/lib/stats';
 
 export default function FavoriteButton({ post }) {
   const [user, setUser] = useState(undefined);
@@ -35,6 +36,7 @@ export default function FavoriteButton({ post }) {
         await addFavorite(user.email, post);
         setFav(true);
         trackEvent('favorite_added', { post_slug: post.slug, category: post.category });
+        trackArticleEvent(post.id, ['favs']);
       }
     } catch (err) {
       alert(err.message);

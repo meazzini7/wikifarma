@@ -3,6 +3,7 @@ import { getPostBySlug } from '@/lib/firestore';
 import { getOrCreateTranslation, isTranslatable, SUPPORTED_LANGS } from '@/lib/translate';
 import { SITE_URL } from '@/lib/constants';
 import SafeImage from '@/components/SafeImage';
+import ArticleTracker from '@/components/ArticleTracker';
 
 const DISCLAIMERS = {
   en: '⚠️ The information provided here does not replace medical advice. If in doubt, consult your doctor.',
@@ -71,6 +72,7 @@ export default async function TranslatedArticlePage({ params }) {
 
   return (
     <div className="article-page">
+      <ArticleTracker postId={post.id} intl />
       <h1 className="article-title">{translated.title}</h1>
       <SafeImage
         src={post.image_url}

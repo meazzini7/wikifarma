@@ -153,6 +153,11 @@ export default function AdminPage() {
   return (
     <div className="admin-wrap">
       <h1>Admin Dashboard 🛠️</h1>
+      <p style={{ margin: '0 0 15px' }}>
+        <Link href="/admin/insights" style={{ color: '#054d2e', fontWeight: 600 }}>
+          📊 Insights: cosa rende e dove spingere →
+        </Link>
+      </p>
 
       {genMessage && (
         <div

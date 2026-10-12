@@ -31,11 +31,13 @@ app/
   profile/page.jsx            Profilo utente: preferiti + storico diagnosi
   per-te/page.jsx             Raccomandazioni personalizzate (preferiti + cronologia letture)
   admin/page.jsx              Pannello admin protetto (generazione articoli, eliminazione)
+  admin/insights/page.jsx     Pannello SEGRETO di valutazione (temi/articoli che rendono, strategia, dove spingere)
   privacy/, contact/          Pagine statiche
   sitemap.js, robots.js       SEO tecnico (sitemap dinamica da Firestore, revalidate 3h)
   api/diagnose/               Gemini server-side per la diagnosi
   api/generate-article/       Generazione manuale da admin panel (protetta da lib/verifyAdmin.js)
   api/track-visit/            Contatore visite privacy-friendly (IP hashato)
+  api/admin/insights/         Dati del pannello insights (solo admin, verifica JWT; POST = ricostruisce la strategia)
   api/cron/drugs/             Cron farmaci (lista prioritaria, sequenziale, dedup)
   api/cron/content/           Cron benessere/problemi (alterna per giorno, random+dedup)
 
@@ -54,6 +56,10 @@ lib/
   email.js                      Notifica Resend (degrada in silenzio se non configurata)
   verifyAdmin.js                 Verifica JWT Firebase (per gating /api/generate-article)
   gtag.js                        Helper eventi GA4 custom
+  stats.js                       Contatori anonimi per articolo scritti dal browser (article_stats)
+  performance.js                 Motore di valutazione puro: punteggi, temi, raccomandazioni, scelta pesata
+  performanceData.js             Lettura Admin SDK di posts + article_stats per la valutazione
+  strategy.js                    Strategia appresa (strategy/current): brief editoriale, idee, pesi per tema
   constants.js                   ADMIN_EMAIL, SITE_URL, GA_ID, ADSENSE_ID, PLACEHOLDER_IMAGE
 
 components/
@@ -63,6 +69,8 @@ components/
   SafeImage.jsx                  Immagine con fallback a cascata (generata -> pool -> placeholder)
   FavoriteButton.jsx, ShareButtons.jsx, ReadingTracker.jsx
   GAListener.jsx, VisitorTracker.jsx
+  ArticleTracker.jsx             Misura visita, lettura 30s e scroll 75% per articolo (-> lib/stats.js)
+  InsightsView.jsx               Parte visiva del pannello /admin/insights
 ```
 
 ## Collection Firestore
@@ -73,6 +81,32 @@ components/
 - `favorites` — preferiti (`userEmail`, `postId`, `slug`, `title`, `category`). Doc ID: `{userEmail}_{postId}`.
 - `reading_history` — proxy per interesse utente (view count per post, non tempo di lettura preciso).
 - `daily_visitors` — contatore visite anonimizzato (hash IP, non IP in chiaro).
+- `article_stats` — contatori anonimi per articolo (doc ID = id del post): `views`, `engaged` (30s+ con scheda
+  visibile), `deep` (scroll 75%), `shares`, `favs`, `views_intl` (visite alle versioni tradotte). Scritti dal browser
+  con incrementi di +1 (nessuna funzione Vercel); NON leggibili dal client, solo Admin SDK. Misure proprie attive
+  dal 12/10/2026 (`TRACKING_START_MS` in `lib/performance.js`): prima c'e' solo GA4.
+- `strategy` — doc `current`: strategia editoriale appresa (pesi per tema, brief, idee, farmaci da anticipare).
+  Solo Admin SDK. Ricostruita ogni 7 giorni nel giorno libero della route cron/content, o dal pannello insights.
+
+### Regole Firestore da pubblicare per `article_stats` (dentro `match /databases/{database}/documents`)
+```
+function statsDelta(prev, field) {
+  return request.resource.data.get(field, 0) - prev.get(field, 0);
+}
+function validStatsWrite(prev) {
+  return request.resource.data.keys().hasOnly(['views','engaged','deep','shares','favs','views_intl'])
+    && statsDelta(prev,'views') in [0,1] && statsDelta(prev,'engaged') in [0,1]
+    && statsDelta(prev,'deep') in [0,1] && statsDelta(prev,'shares') in [0,1]
+    && statsDelta(prev,'favs') in [0,1] && statsDelta(prev,'views_intl') in [0,1];
+}
+match /article_stats/{postId} {
+  allow read, delete: if false;
+  allow create: if validStatsWrite({});
+  allow update: if validStatsWrite(resource.data);
+}
+```
+Limite noto: chiunque puo' scrivere +1 a mano (i bot che eseguono JS e gli script); i numeri sono un segnale
+relativo per classificare, non una contabilita' esatta.
 
 ## Variabili d'ambiente (Vercel)
 Vedi `.env.example` per la lista completa. In sintesi:
@@ -115,6 +149,13 @@ Vedi `.env.example` per la lista completa. In sintesi:
    dispari - ridotto da 2/giorno su richiesta esplicita per contenere CPU/quota e dare priorità alla qualità
    sul volume) + email Resend
 6. ✅ AdSense (Auto ads), GA4 (+ eventi custom: search, diagnosis_completed, favorite_added), ads.txt, privacy, sitemap.xml, robots.txt
+
+7. ✅ Ciclo di apprendimento: misure proprie per articolo -> punteggio (lettura reale, non solo visite) ->
+   strategia settimanale (`lib/strategy.js`) che orienta la generazione: con probabilita' `exploit_prob`
+   (35-65% a seconda dei dati disponibili, mai meno del 35% di esplorazione casuale) l'argomento e' scelto dai temi
+   che rendono e dalle idee generate; il `brief` editoriale entra nel prompt. Ogni articolo salva `gen_mode`
+   (`exploit`|`explore`) cosi' il pannello misura se la strategia batte il caso. Pannello: `/admin/insights`.
+   Il "valore" per tema (`cpc` in `lib/performance.js`) e' una STIMA, da sostituire con gli RPM reali di AdSense.
 
 Prossimi passi aperti: nessuna fase strutturale mancante: eventuali richieste sono miglioramenti
 incrementali (i18n, performance, nuove feature) da trattare come task a se stanti.
