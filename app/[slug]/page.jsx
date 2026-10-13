@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import Script from 'next/script';
 import { getPostBySlug, getRecommendedPosts } from '@/lib/firestore';
@@ -8,6 +7,11 @@ import SafeImage from '@/components/SafeImage';
 import FavoriteButton from '@/components/FavoriteButton';
 import ReadingTracker from '@/components/ReadingTracker';
 import ShareButtons from '@/components/ShareButtons';
+import Breadcrumb, { categoryHref, categoryLabel } from '@/components/Breadcrumb';
+import ReadingProgress from '@/components/ReadingProgress';
+import RelatedSection, { PopularList } from '@/components/RelatedSection';
+import { getRelated } from '@/lib/related';
+import { insertReadAlso, readingMinutes } from '@/lib/content';
 
 // Senza generateStaticParams ogni pagina articolo viene renderizzata a
 // richiesta (query Firestore comprese) - senza una cache, questo succede
@@ -69,7 +73,21 @@ export default async function ArticlePage({ params }) {
   const post = await getPostBySlug(params.slug);
   if (!post) notFound();
 
-  const related = await getRecommendedPosts([post.category], new Set([post.slug]), 4);
+  // Correlati pertinenti (tema/stile/parole del titolo + popolarita'); se non
+  // disponibili si ripiega sui correlati classici (stessa categoria, recenti).
+  const rel = await getRelated(post, { lang: 'it' });
+  const readAlso = rel?.related[0] || null;
+  const moreItems = rel
+    ? rel.related.slice(1, 5)
+    : (await getRecommendedPosts([post.category], new Set([post.slug]), 4)).map((r) => ({
+        slug: r.slug,
+        title: r.title,
+        category: r.category,
+        image_url: r.image_url,
+        href: `/${r.slug}`,
+      }));
+  const bodyHtml = readAlso ? insertReadAlso(post.content || '', readAlso) : post.content || '';
+  const minutes = readingMinutes(post.content);
   const url = `${SITE_URL}/${post.slug}`;
   const description = stripHtml(post.content).slice(0, 200);
 
@@ -93,8 +111,19 @@ export default async function ArticlePage({ params }) {
     },
   };
 
+  const breadcrumbLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
+      { '@type': 'ListItem', position: 2, name: categoryLabel(post.category), item: `${SITE_URL}${categoryHref(post.category, post.title)}` },
+      { '@type': 'ListItem', position: 3, name: post.title, item: url },
+    ],
+  };
+
   return (
     <>
+      <ReadingProgress />
       {/* AdSense Auto ads: caricato solo sulla pagina articolo, come nel sito
           originale. Nessuna unita' manuale: senza uno slot reale creato
           nella dashboard AdSense un <ins> con slot fittizio non mostra
@@ -109,9 +138,14 @@ export default async function ArticlePage({ params }) {
       <Script id="article-jsonld" type="application/ld+json" strategy="afterInteractive">
         {JSON.stringify(jsonLd)}
       </Script>
+      <Script id="breadcrumb-jsonld" type="application/ld+json" strategy="afterInteractive">
+        {JSON.stringify(breadcrumbLd)}
+      </Script>
       <ReadingTracker post={{ id: post.id, slug: post.slug, title: post.title, category: post.category }} />
       <div className="article-page">
+        <Breadcrumb category={post.category} title={post.title} />
         <h1 className="article-title">{post.title}</h1>
+        <p className="article-meta">⏱ {minutes} min di lettura</p>
         <SafeImage
           src={post.image_url}
           category={post.category}
@@ -133,28 +167,14 @@ export default async function ArticlePage({ params }) {
         </div>
 
         {/* Contenuto generato dall'admin panel AI (fase 7): sorgente attendibile, non input utente. */}
-        <div className="article-content" dangerouslySetInnerHTML={{ __html: post.content || '' }} />
+        <div className="article-content" dangerouslySetInnerHTML={{ __html: bodyHtml }} />
 
         <div className="disclaimer-box">
           ⚠️ Le informazioni qui riportate non sostituiscono il parere del medico.
         </div>
 
-        {related.length > 0 && (
-          <div className="related-articles">
-            <h2>Articoli correlati</h2>
-            <div className="news-grid">
-              {related.map((r) => (
-                <Link key={r.id} href={`/${r.slug}`} className="card">
-                  <SafeImage src={r.image_url} category={r.category} alt={r.title} className="card-img" />
-                  <div className="card-body">
-                    <div className="card-tag">{r.category}</div>
-                    <h3>{r.title}</h3>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
+        <RelatedSection heading="Continua a leggere" items={moreItems} />
+        <PopularList heading="I più letti del momento" items={rel?.popular} />
       </div>
     </>
   );

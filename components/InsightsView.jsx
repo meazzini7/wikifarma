@@ -38,6 +38,33 @@ function Progress({ label, value, need }) {
   );
 }
 
+function Delta({ cur, prev, digits = 1, suffix = '' }) {
+  if (cur === null || cur === undefined || prev === null || prev === undefined) return <span style={{ color: '#889', fontSize: 12 }}>nessun confronto</span>;
+  const d = Math.round((cur - prev) * 10 ** digits) / 10 ** digits;
+  if (d === 0) return <span style={{ color: '#889', fontSize: 12 }}>invariato</span>;
+  return (
+    <span style={{ color: d > 0 ? '#14532d' : '#b00020', fontSize: 12, fontWeight: 600 }}>
+      {d > 0 ? '▲ +' : '▼ '}{d}{suffix} <span style={{ color: '#889', fontWeight: 400 }}>vs periodo prec.</span>
+    </span>
+  );
+}
+
+function Entrances({ rows, empty }) {
+  if (!rows.length) return <p style={{ ...note, marginBottom: 0 }}>{empty}</p>;
+  return (
+    <Table head={['Pagina d\'ingresso', 'Sessioni', 'Pagine per sessione', 'Coinvolte']}>
+      {rows.map((e) => (
+        <tr key={e.slug}>
+          <td style={td}><Link href={`/${e.slug}`} style={{ color: GREEN, fontWeight: 600 }}>{e.title}</Link><div style={{ fontSize: 12, color: '#889' }}>{e.category}</div></td>
+          <td style={td}>{e.sessions}</td>
+          <td style={td}>{e.pagesPerSession}</td>
+          <td style={td}>{Math.round(e.engagedRate * 100)}%</td>
+        </tr>
+      ))}
+    </Table>
+  );
+}
+
 function Groups({ rows, empty }) {
   if (!rows.length) return <p style={{ ...note, marginBottom: 0 }}>{empty}</p>;
   return (
@@ -183,6 +210,34 @@ export default function InsightsView({ data, onRefresh, refreshing }) {
         {stat('Visite da versioni tradotte', `${Math.round(t.intlShare28 * 100)}%`)}
         {stat('Articoli confrontabili', t.comparable)}
         {stat('…senza visite in 1ª settimana', t.comparableNoViews)}
+      </div>
+
+      <div style={card}>
+        <h2 style={h2}>Fidelizzazione: restano sul sito? (ultimi 28 giorni)</h2>
+        {r.stickiness.site.current ? (
+          <>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 12 }}>
+              {[
+                ['Pagine per sessione', r.stickiness.site.current.pagesPerSession, r.stickiness.site.previous?.pagesPerSession, 2, ''],
+                ['Sessioni coinvolte', Math.round(r.stickiness.site.current.engagedRate * 100), r.stickiness.site.previous ? Math.round(r.stickiness.site.previous.engagedRate * 100) : null, 0, ' pt'],
+                ['Durata media sessione (s)', r.stickiness.site.current.avgSessionSec, r.stickiness.site.previous?.avgSessionSec, 0, ' s'],
+              ].map(([label, cur, prev, digits, suffix]) => (
+                <div key={label} style={{ flex: '1 1 150px', background: '#f6f9f7', borderRadius: 10, padding: '10px 12px' }}>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: GREEN }}>{cur}{label === 'Sessioni coinvolte' ? '%' : ''}</div>
+                  <div style={{ fontSize: 12, color: '#667' }}>{label}</div>
+                  <Delta cur={cur} prev={prev} digits={digits} suffix={suffix} />
+                </div>
+              ))}
+            </div>
+            <p style={note}>«Pagine per sessione» è il numero chiave: 1,0 significa che chi arriva legge una pagina e se ne va. Ogni miglioramento (correlati, «Leggi anche», più letti) si giudica da qui.</p>
+          </>
+        ) : (
+          <p style={note}>Dati di sessione non ancora disponibili.</p>
+        )}
+        <h3 style={{ fontSize: 15, margin: '12px 0 6px' }}>Pagine d&apos;ingresso che portano oltre</h3>
+        <Entrances rows={r.stickiness.entrances.sticky} empty="Servono pagine d'ingresso con almeno 3 sessioni." />
+        <h3 style={{ fontSize: 15, margin: '16px 0 6px' }}>Pagine d&apos;ingresso che perdono il lettore (5+ sessioni, mai una seconda pagina)</h3>
+        <Entrances rows={r.stickiness.entrances.dead} empty="Nessuna: ogni ingresso importante porta a un passo successivo." />
       </div>
 
       <div style={card}>

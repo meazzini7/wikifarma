@@ -3,6 +3,8 @@ import LiveSearch from '@/components/LiveSearch';
 import SafeImage from '@/components/SafeImage';
 import { getHomeStats, getRecentPosts } from '@/lib/firestore';
 import { getDisplayVisitorCount } from '@/lib/visitorCounter';
+import RelatedSection from '@/components/RelatedSection';
+import { getPopularItems } from '@/lib/related';
 
 // ISR invece di rendering dinamico ad ogni richiesta: il contenuto cambia
 // solo con i cron (2 volte al giorno), quindi una cache di 30 minuti non
@@ -13,7 +15,7 @@ import { getDisplayVisitorCount } from '@/lib/visitorCounter';
 export const revalidate = 3600;
 
 export default async function HomePage() {
-  const [stats, recent] = await Promise.all([getHomeStats(), getRecentPosts(9)]);
+  const [stats, recent, popular] = await Promise.all([getHomeStats(), getRecentPosts(9), getPopularItems(6)]);
   const displayVisitors = getDisplayVisitorCount(stats.visitors);
 
   return (
@@ -100,6 +102,15 @@ export default async function HomePage() {
           </Link>
         </div>
       </section>
+
+      {popular.length > 0 && (
+        <section className="section-home">
+          <div className="section-head">
+            <h2>I più letti del momento</h2>
+          </div>
+          <RelatedSection items={popular} bare />
+        </section>
+      )}
 
       <section className="section-home">
         <div className="section-head">

@@ -3,6 +3,10 @@ import { getPostBySlug } from '@/lib/firestore';
 import { getOrCreateTranslation, isTranslatable, SUPPORTED_LANGS } from '@/lib/translate';
 import { SITE_URL } from '@/lib/constants';
 import SafeImage from '@/components/SafeImage';
+import ReadingProgress from '@/components/ReadingProgress';
+import RelatedSection, { PopularList } from '@/components/RelatedSection';
+import { getRelated } from '@/lib/related';
+import { insertReadAlso, readingMinutes } from '@/lib/content';
 
 const DISCLAIMERS = {
   en: '⚠️ The information provided here does not replace medical advice. If in doubt, consult your doctor.',
@@ -16,6 +20,15 @@ const DISCLAIMERS = {
 // è già in cache su Firestore, anche una chiamata Gemini - 2 ore di ISR
 // evitano entrambe le cose per le richieste ripetute.
 export const revalidate = 7200;
+
+// Testi delle sezioni di fidelizzazione per lingua: queste pagine portano il
+// traffico estero e prima erano un vicolo cieco (nessun altro articolo).
+const UI = {
+  en: { more: 'Keep reading', popular: 'Most read right now', also: 'Read also', min: 'min read' },
+  es: { more: 'Sigue leyendo', popular: 'Lo más leído ahora', also: 'Lee también', min: 'min de lectura' },
+  fr: { more: 'Continuez la lecture', popular: 'Les plus lus du moment', also: 'À lire aussi', min: 'min de lecture' },
+  de: { more: 'Weiterlesen', popular: 'Aktuell am meisten gelesen', also: 'Auch interessant', min: 'Min. Lesezeit' },
+};
 
 function stripHtml(html = '') {
   return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
@@ -69,17 +82,27 @@ export default async function TranslatedArticlePage({ params }) {
   const translated = await getOrCreateTranslation(post, lang);
   if (!translated) redirect(`/${slug}`);
 
+  const ui = UI[lang];
+  const rel = await getRelated(post, { lang });
+  const readAlso = rel?.related[0] || null;
+  const bodyHtml = readAlso ? insertReadAlso(translated.content, readAlso, ui.also) : translated.content;
+  const minutes = readingMinutes(translated.content);
+
   return (
     <div className="article-page">
+      <ReadingProgress />
       <h1 className="article-title">{translated.title}</h1>
+      <p className="article-meta">⏱ {minutes} {ui.min}</p>
       <SafeImage
         src={post.image_url}
         category={post.category}
         alt={translated.title}
         className="article-main-img"
       />
-      <div className="article-content" dangerouslySetInnerHTML={{ __html: translated.content }} />
+      <div className="article-content" dangerouslySetInnerHTML={{ __html: bodyHtml }} />
       <div className="disclaimer-box">{DISCLAIMERS[lang]}</div>
+      <RelatedSection heading={ui.more} items={rel?.related.slice(1, 5)} showTag={false} />
+      <PopularList heading={ui.popular} items={rel?.popular} />
     </div>
   );
 }

@@ -57,6 +57,9 @@ lib/
   verifyAdmin.js                 Verifica JWT Firebase (per gating /api/generate-article)
   gtag.js                        Helper eventi GA4 custom
   ga4.js                         Client GA4 Data API (runReport) col service account di Firebase Admin
+  insightsSchema.js              SCHEMA_VERSION (4) dello snapshot, separato per non far importare il client GA4 alle pagine pubbliche
+  related.js                     Correlati per pertinenza (tema/stile/parole/categoria + popolarita' GA), "piu' letti", anche per le
+                                  pagine tradotte; candidati e popolari in Data Cache 6h
   insights.js                    Valutazione da GA4: punteggio prima settimana, gruppi, pesi, soglie, cache 12h
   performance.js                 Classificazione pura: tema (classifyTopic), stile del titolo, scelta pesata
   performanceData.js             Lettura Admin SDK dei metadati degli articoli
@@ -71,7 +74,8 @@ components/
   FavoriteButton.jsx, ShareButtons.jsx, ReadingTracker.jsx
   GAListener.jsx, VisitorTracker.jsx
   GoogleAnalytics.jsx            Script GA4, escluso sotto /admin (le visite admin non sporcano i dati)
-  InsightsView.jsx               Parte visiva del pannello /admin/insights
+  InsightsView.jsx               Parte visiva del pannello /admin/insights (incl. card "Fidelizzazione")
+  RelatedSection.jsx, Breadcrumb.jsx, ReadingProgress.jsx   Fidelizzazione in pagina articolo (correlati/piu' letti, breadcrumb, barra di lettura)
 ```
 
 ## Collection Firestore
@@ -154,3 +158,12 @@ incrementali (i18n, performance, nuove feature) da trattare come task a se stant
 - Non committare mai chiavi private (service account, API key) — se usate temporaneamente per uno
   script di migrazione/patch dati, tenerle fuori dal repo (scratchpad) ed eliminarle a fine uso
 - Quando la conversazione si allunga, ricorda all'utente di usare `/clear` o `/compact`
+
+## Fidelizzazione (obiettivo: tenere i lettori sul portale)
+- Pagina articolo (it e tradotte): breadcrumb + BreadcrumbList JSON-LD, tempo di lettura, barra di avanzamento, box "Leggi anche"
+  inline a ~68% (`insertReadAlso` in `lib/content.js`), correlati pertinenti (`lib/related.js`), lista "I piu' letti"; home: "I piu' letti
+  del momento". Niente elementi fissi/invadenti (AdSense).
+- Le pagine tradotte linkano solo articoli gia' tradotti (altrimenti i crawler farebbero partire traduzioni in massa). Il pool inglese cresce
+  nel giorno libero di `cron/content` con `translateNextPopular` (l'articolo piu' letto non ancora tradotto, 1 ogni 2 giorni).
+- Misura: card "Fidelizzazione" in `/admin/insights` (pagine per sessione vs periodo precedente, pagine d'ingresso che trattengono/perdono).
+  GA4 report `site` e `landing` in `lib/ga4.js`.

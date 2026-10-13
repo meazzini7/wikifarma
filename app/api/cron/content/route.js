@@ -5,7 +5,7 @@ import { isGeminiConfigured } from '@/lib/gemini';
 import { buildProblemsPrompt, buildWellnessPrompt } from '@/lib/prompts';
 import { PROBLEMS_TOPICS, WELLNESS_TOPICS } from '@/lib/cronTopics';
 import { generateAndSaveArticle, pickRandomTopic } from '@/lib/articleGenerator';
-import { chooseCategory, chooseContentTopic, getGenerationPlan, refreshStrategyIfStale } from '@/lib/strategy';
+import { chooseCategory, chooseContentTopic, getGenerationPlan, refreshStrategyIfStale, translateNextPopular } from '@/lib/strategy';
 
 export const maxDuration = 60;
 
@@ -34,10 +34,21 @@ export async function GET(request) {
     } catch (err) {
       console.error('/api/cron/content: aggiornamento strategia fallito:', err);
     }
+    // Se la strategia non e' stata appena ricostruita (che gia' usa Gemini e
+    // tempo), si traduce in inglese il prossimo articolo piu' letto.
+    let translation = null;
+    if (!strategyRefresh?.refreshed) {
+      try {
+        translation = await translateNextPopular('en');
+      } catch (err) {
+        console.error('/api/cron/content: traduzione non riuscita:', err);
+      }
+    }
     return NextResponse.json({
       skipped: true,
       reason: 'Generazione benessere/problemi a giorni alterni: oggi tocca ai farmaci.',
       strategy: strategyRefresh,
+      translation,
     });
   }
   const defaultCategory = Math.floor(dayOfYear / 2) % 2 === 0 ? 'Benessere' : 'Problemi Frequenti';
