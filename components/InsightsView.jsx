@@ -76,27 +76,57 @@ function ArticleList({ rows, empty, last }) {
   );
 }
 
+// Quali passaggi controllare dipende dall'errore: mostrarli tutti allo stesso
+// modo faceva sembrare da rifare anche quelli gia' fatti.
+const RELEVANT = {
+  api_disabled: [1],
+  no_access: [2, 3],
+  bad_property: [3],
+  auth: [],
+  not_configured: [1, 2, 3],
+  unknown: [1, 2, 3],
+};
+
 function SetupGuide({ setup }) {
-  const step = { margin: '0 0 10px', fontSize: 14, lineHeight: 1.55 };
+  const todo = new Set(RELEVANT[setup.code] || [1, 2, 3]);
+  const box = (n) => ({
+    margin: '0 0 10px',
+    fontSize: 14,
+    lineHeight: 1.55,
+    padding: '8px 12px',
+    borderRadius: 8,
+    borderLeft: `4px solid ${todo.has(n) ? '#d98a00' : '#c9d6cd'}`,
+    background: todo.has(n) ? '#fff9ee' : '#f6f9f7',
+    color: todo.has(n) ? '#222' : '#667',
+  });
+  const tag = (n) => (
+    <span style={{ fontSize: 12, fontWeight: 700, color: todo.has(n) ? '#8a5a00' : '#14532d' }}>
+      {todo.has(n) ? '👉 da controllare' : '✓ non è questo il problema'}
+    </span>
+  );
+
   return (
     <div style={card}>
       <h2 style={h2}>Collegamento a Google Analytics da completare</h2>
-      <p style={{ ...step, color: '#8a5a00', background: '#fff4e0', padding: '8px 12px', borderRadius: 8 }}>{setup.message}</p>
-      <p style={step}>
-        <b>1.</b> Abilita la <b>Google Analytics Data API</b> nel progetto Google Cloud:{' '}
-        <a href={`https://console.cloud.google.com/apis/library/analyticsdata.googleapis.com?project=${GCP_PROJECT}`} target="_blank" rel="noopener noreferrer" style={{ color: GREEN }}>apri la libreria API</a>{' '}
-        e premi «Abilita».
-      </p>
-      <p style={step}>
-        <b>2.</b> In Analytics → Amministrazione → <b>Gestione accesso proprietà</b> aggiungi come <b>Visualizzatore</b> questo indirizzo:
-        <br /><code style={{ background: '#f2f5f3', padding: '2px 6px', borderRadius: 4, wordBreak: 'break-all' }}>{setup.service_account || 'FIREBASE_ADMIN_CLIENT_EMAIL (non impostata)'}</code>
-      </p>
-      <p style={step}>
-        <b>3.</b> Su Vercel aggiungi la variabile <code>GA4_PROPERTY_ID</code> con l&apos;<b>ID proprietà</b> numerico (Analytics → Amministrazione → Impostazioni proprietà, in alto a destra).
-        Non è l&apos;ID stream e non è l&apos;ID di misurazione che inizia per «G-». Poi rifai il deploy.
-        {setup.property_id_set ? ' (La variabile risulta già impostata.)' : ''}
-      </p>
-      <p style={{ ...note, marginBottom: 0 }}>Appena i tre passaggi sono fatti, ricarica questa pagina: i dati compaiono da soli.</p>
+      <p style={{ margin: '0 0 12px', fontSize: 14, color: '#8a5a00', background: '#fff4e0', padding: '8px 12px', borderRadius: 8 }}>{setup.message}</p>
+
+      <div style={box(1)}>
+        <b>1. API abilitata</b> {tag(1)}<br />
+        La <b>Google Analytics Data API</b> deve essere abilitata nel progetto Google Cloud:{' '}
+        <a href={`https://console.cloud.google.com/apis/library/analyticsdata.googleapis.com?project=${GCP_PROJECT}`} target="_blank" rel="noopener noreferrer" style={{ color: GREEN }}>apri la libreria API</a>.
+      </div>
+      <div style={box(2)}>
+        <b>2. Accesso del service account</b> {tag(2)}<br />
+        In Analytics → Amministrazione → <b>Gestione accesso proprietà</b> deve comparire come <b>Visualizzatore</b>:
+        <br /><code style={{ background: '#fff', padding: '2px 6px', borderRadius: 4, wordBreak: 'break-all' }}>{setup.service_account || 'FIREBASE_ADMIN_CLIENT_EMAIL (non impostata)'}</code>
+      </div>
+      <div style={box(3)}>
+        <b>3. GA4_PROPERTY_ID su Vercel</b> {tag(3)}<br />
+        Deve essere l&apos;<b>ID proprietà</b> numerico (Analytics → Amministrazione → Impostazioni proprietà → Dettagli proprietà, in alto a destra).
+        Non l&apos;ID stream e non l&apos;ID di misurazione che inizia per «G-». Dopo ogni modifica serve un nuovo deploy.
+        {setup.property_id_set ? ' La variabile risulta impostata: verifica che sia il numero giusto.' : ' La variabile al momento NON risulta impostata.'}
+      </div>
+      <p style={{ ...note, marginBottom: 0 }}>Quando hai corretto, ricarica questa pagina: i dati compaiono da soli.</p>
     </div>
   );
 }
