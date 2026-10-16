@@ -13,7 +13,7 @@ export function generateStaticParams() {
   return LETTERS.map((letter) => ({ letter }));
 }
 
-export const revalidate = 10800;
+export const revalidate = 86400;
 
 export function generateMetadata({ params }) {
   const letter = params.letter.toUpperCase();

@@ -5,7 +5,7 @@ import SafeImage from '@/components/SafeImage';
 // ISR invece di force-dynamic: il contenuto cambia solo con il cron (1
 // articolo al giorno), un'ora di cache evita di rifare la query Firestore
 // ad ogni visita senza perdere freschezza percepibile.
-export const revalidate = 3600;
+export const revalidate = 21600;
 
 export const metadata = {
   title: 'Problemi Frequenti | WikiFarma',

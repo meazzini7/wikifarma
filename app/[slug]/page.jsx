@@ -18,8 +18,8 @@ import { insertReadAlso, readingMinutes } from '@/lib/content';
 // ad ogni singola visita, la fonte piu' pesante di consumo CPU su Vercel
 // dato che sono le pagine piu' visitate del sito. Gli articoli cambiano di
 // fatto solo quando generati o editati da admin, mai in tempo reale, quindi
-// 2 ore di cache sono sicure.
-export const revalidate = 7200;
+// 12 ore di cache sono sicure (i cron invalidano le liste alla pubblicazione).
+export const revalidate = 43200;
 
 function stripHtml(html = '') {
   return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();

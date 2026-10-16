@@ -2,7 +2,7 @@ import { collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { SITE_URL } from '@/lib/constants';
 
-export const revalidate = 10800; // ora che il cron genera 1 articolo/giorno invece di 2, 3h di cache bastano
+export const revalidate = 43200; // ora che il cron genera 1 articolo/giorno invece di 2, 3h di cache bastano
 
 const LETTERS = Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i));
 

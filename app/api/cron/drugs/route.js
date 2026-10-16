@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidateAfterPublish } from '@/lib/revalidateSite';
 import { isAuthorizedCron } from '@/lib/cronAuth';
 import { isFirebaseAdminConfigured } from '@/lib/firebaseAdmin';
 import { isGeminiConfigured } from '@/lib/gemini';
@@ -53,6 +54,7 @@ export async function GET(request) {
       console.error('/api/cron/drugs fallito:', result.error);
       return NextResponse.json(result, { status: 502 });
     }
+    revalidateAfterPublish(result);
     return NextResponse.json(result);
   } catch (err) {
     console.error('/api/cron/drugs eccezione:', err);

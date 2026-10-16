@@ -12,7 +12,7 @@ import { getPopularItems } from '@/lib/related';
 // evita di ricalcolare la homepage (query Firestore comprese) ad ogni
 // singola visita - risparmio di CPU rilevante visto che e' la pagina
 // piu' visitata del sito.
-export const revalidate = 3600;
+export const revalidate = 21600;
 
 export default async function HomePage() {
   const [stats, recent, popular] = await Promise.all([getHomeStats(), getRecentPosts(9), getPopularItems(6)]);
