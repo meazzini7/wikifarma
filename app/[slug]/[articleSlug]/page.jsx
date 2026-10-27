@@ -100,6 +100,11 @@ export default async function TranslatedArticlePage({ params }) {
         alt={translated.title}
         className="article-main-img"
       />
+      {post.photo?.author && (
+        <p className="photo-credit">
+          Foto: <a href={post.photo.author_url} target="_blank" rel="noopener noreferrer nofollow">{post.photo.author}</a> / Unsplash
+        </p>
+      )}
       <div className="article-content" dangerouslySetInnerHTML={{ __html: bodyHtml }} />
       <div className="disclaimer-box">{DISCLAIMERS[lang]}</div>
       <RelatedSection heading={ui.more} items={rel?.related.slice(1, 5)} showTag={false} />

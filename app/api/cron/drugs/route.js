@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { revalidateAfterPublish } from '@/lib/revalidateSite';
 import { refreshInsightsIfOld } from '@/lib/insights';
+import { trackPending } from '@/lib/unsplash';
 import { isAuthorizedCron } from '@/lib/cronAuth';
 import { isFirebaseAdminConfigured } from '@/lib/firebaseAdmin';
 import { isGeminiConfigured } from '@/lib/gemini';
@@ -58,6 +59,7 @@ export async function GET(request) {
     // Dopo la pubblicazione si aggiorna lo snapshot GA4 (se vecchio): alimenta
     // "In tendenza" e i "piu' letti". Mai bloccante per l'esito del cron.
     await refreshInsightsIfOld();
+    await trackPending({ limit: 10 }).catch(() => null);
     revalidateAfterPublish(result);
     return NextResponse.json(result);
   } catch (err) {

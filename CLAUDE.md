@@ -49,6 +49,10 @@ lib/
   favorites.js                  Preferiti + storico letture (collections favorites, reading_history)
   gemini.js, prompts.js         Client Gemini + prompt per farmaco/benessere/problemi
   articleGenerator.js           Logica condivisa di generazione articolo (usata dai cron)
+  unsplash.js, photoScenes.js    Foto Unsplash UNICHE per articolo: scene (query EN) -> pool in Firestore (photo_pools/{scena}) -> foto non
+                                 ancora usata; credito al fotografo, download tracking, quota demo 50 req/h. Pure e testate senza rete
+  audit.js, maintenance.js       Controllo/riparazione/riscrittura degli articoli difettosi (admin: components/MaintenanceBox.jsx,
+                                 api/admin/maintenance). audit.js e' puro; i difetti 'fix' si riparano da soli, 'regen' si riscrivono con Gemini
   cover.js                      Copertine GENERATE DAL CODICE (SVG unico per titolo+categoria: colori/forme/testo da hash). Nessun file
                                  esterno => mai rotte, mai ripetute, mai senza immagine. coverUrl.js + app/api/cover (PNG edge, immutable)
                                  per og:image/JSON-LD. I vecchi image_url (pool Unsplash/pollinations) NON si usano piu' (SafeImage li ignora);
@@ -75,7 +79,7 @@ components/
   Navbar.jsx, Footer.jsx        Layout globale (menu mobile hamburger)
   LiveSearch.jsx                 Ricerca live con navigazione da tastiera (query diretta a Firestore
                                   dal client, nessuna funzione serverless dedicata)
-  SafeImage.jsx                  Mostra sempre la copertina generata da lib/cover.js (ignora image_url)
+  SafeImage.jsx                  Foto Unsplash assegnata (URL con wf=1) altrimenti copertina generata da lib/cover.js; ignora ogni altro image_url
   FavoriteButton.jsx, ShareButtons.jsx, ReadingTracker.jsx
   GAListener.jsx, VisitorTracker.jsx
   GoogleAnalytics.jsx            Script GA4, escluso sotto /admin (le visite admin non sporcano i dati)
@@ -103,6 +107,7 @@ Vedi `.env.example` per la lista completa. In sintesi:
 - `NEXT_PUBLIC_FIREBASE_*` — config client Firebase (pubblica, non segreta)
 - `FIREBASE_ADMIN_CLIENT_EMAIL` / `FIREBASE_ADMIN_PRIVATE_KEY` — service account, **mai committare**, usato solo server-side dai cron
 - `GEMINI_API_KEY` — server-side, mai esposta al client
+- `UNSPLASH_ACCESS_KEY` — Access Key dell'app Unsplash (foto articoli); senza, restano le copertine generate
 - `RESEND_API_KEY`, `ADMIN_NOTIFICATION_EMAIL` — opzionali, email degrada in silenzio se assenti
 - `GA4_PROPERTY_ID` — ID numerico della PROPRIETA' GA4 (Analytics > Amministrazione > Impostazioni proprieta'),
   non l'ID stream ne' l'ID misurazione G-XXXX. Serve anche: Google Analytics Data API abilitata nel progetto GCP e
@@ -192,3 +197,13 @@ incrementali (i18n, performance, nuove feature) da trattare come task a se stant
 - Aggiornamento automatico: i cron (`refreshInsightsIfOld`, dopo la generazione e nel giorno libero) tengono fresco lo snapshot GA4
   e invalidano `/tendenza`; la pagina e' ISR 1h, loader in Data Cache 3h (`getTrendingItems` in `lib/related.js`). Senza dati mostra
   gli ultimi articoli. `tendenza` e' in RESERVED_PATHS del middleware e nella sitemap.
+
+## Foto Unsplash e manutenzione articoli
+- Ogni articolo riceve una foto Unsplash UNICA (id mai ripetuto, controllato su tutti i post) scelta per scena in base al tema; se non c'e' foto
+  o non si carica resta la copertina di `lib/cover.js`, quindi mai riquadri rotti ne' articoli senza immagine. Credito sotto l'immagine.
+- Assegnazione: nuovi articoli dai cron (`assignPhotoToNewPost`), arretrato dal pannello admin (pulsante "ASSEGNA FOTO UNSPLASH", 30 per volta,
+  si ferma da solo a quota esaurita; modalita' demo = 50 richieste/ora, si lancia piu' volte o si chiede l'approvazione "production" a Unsplash).
+  Il "download tracking" richiesto da Unsplash parte dai cron (10 per esecuzione) e dal pulsante.
+- Pannello admin > "Manutenzione articoli": CONTROLLA (report difetti, nessuna modifica), RIPARA AUTOMATICAMENTE (HTML grezzo, <h1>, preamboli AI,
+  commenti WordPress, immagini AI inline, caratteri rovinati, titoli con #1234, categoria mancante), RISCRIVI I ROTTI (testo vuoto/corto/troncato,
+  3 per volta, mai sovrascrive con meno di 1000 caratteri). Doppioni di titolo e tag sbilanciati sono solo segnalati.

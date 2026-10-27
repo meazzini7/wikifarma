@@ -1072,3 +1072,13 @@ footer a:hover {
   font-size: 0.82rem;
   color: #6b7a70;
 }
+
+.photo-credit {
+  margin: -10px 0 18px;
+  font-size: 0.75rem;
+  color: #7a877e;
+}
+.photo-credit a {
+  color: inherit;
+  text-decoration: underline;
+}

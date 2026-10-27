@@ -48,7 +48,7 @@ export default async function TrendingPage() {
         {list.map((a, i) => (
           <Link key={a.slug} href={a.href} className="card trending-card">
             <div className="trending-media">
-              <SafeImage category={a.category} alt={a.title} className="card-img" />
+              <SafeImage src={a.image_url} category={a.category} alt={a.title} className="card-img" />
               {items.length > 0 && <span className="trending-rank">{a.rank}</span>}
             </div>
             <div className="card-body">

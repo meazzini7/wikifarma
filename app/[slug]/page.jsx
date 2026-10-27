@@ -61,13 +61,13 @@ export async function generateMetadata({ params }) {
       description,
       url: `${SITE_URL}/${post.slug}`,
       type: 'article',
-      images: [coverUrl(post.title, post.category)],
+      images: [coverUrl(post.title, post.category, post.image_url)],
     },
     twitter: {
       card: 'summary_large_image',
       title: post.title,
       description,
-      images: [coverUrl(post.title, post.category)],
+      images: [coverUrl(post.title, post.category, post.image_url)],
     },
   };
 }
@@ -101,7 +101,7 @@ export default async function ArticlePage({ params }) {
     '@type': post.type === 'drug' ? 'MedicalWebPage' : 'Article',
     headline: post.title,
     description,
-    image: coverUrl(post.title, post.category),
+    image: coverUrl(post.title, post.category, post.image_url),
     url,
     datePublished: post.created_at?.toDate?.().toISOString() || undefined,
     dateModified: post.created_at?.toDate?.().toISOString() || undefined,
@@ -157,6 +157,12 @@ export default async function ArticlePage({ params }) {
           alt={post.title}
           className="article-main-img"
         />
+        {post.photo?.author && (
+          <p className="photo-credit">
+            Foto: <a href={post.photo.author_url} target="_blank" rel="noopener noreferrer nofollow">{post.photo.author}</a> su{' '}
+            <a href="https://unsplash.com/?utm_source=wikifarma&utm_medium=referral" target="_blank" rel="noopener noreferrer nofollow">Unsplash</a>
+          </p>
+        )}
 
         <div className="article-actions">
           <FavoriteButton

@@ -16,6 +16,7 @@ import {
 } from 'firebase/firestore';
 import { getFirebaseAuth, googleProvider, db } from '@/lib/firebase';
 import { ADMIN_EMAIL } from '@/lib/constants';
+import MaintenanceBox from '@/components/MaintenanceBox';
 
 export default function AdminPage() {
   const [user, setUser] = useState(undefined);
@@ -158,6 +159,8 @@ export default function AdminPage() {
           📊 Insights: cosa rende e dove spingere →
         </Link>
       </p>
+
+      <MaintenanceBox user={user} />
 
       {genMessage && (
         <div
