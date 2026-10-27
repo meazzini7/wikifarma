@@ -58,6 +58,9 @@ export default function Navbar() {
           <Link href="/problems" style={{ color: '#e65100', fontWeight: 700 }}>
             Problemi Frequenti
           </Link>
+          <Link href="/tendenza" style={{ color: '#c62828', fontWeight: 700 }}>
+            🔥 In tendenza
+          </Link>
           <Link href="/diagnosis" style={{ color: 'var(--primary)', fontWeight: 700 }}>
             Diagnosi AI
           </Link>

@@ -109,6 +109,11 @@ export default async function HomePage() {
             <h2>I più letti del momento</h2>
           </div>
           <RelatedSection items={popular} bare />
+          <p style={{ textAlign: 'center', marginTop: 20 }}>
+            <Link href="/tendenza" style={{ color: 'var(--primary)', fontWeight: 700 }}>
+              🔥 Vedi la classifica degli articoli in tendenza →
+            </Link>
+          </p>
         </section>
       )}
 

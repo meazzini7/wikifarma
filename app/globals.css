@@ -282,6 +282,7 @@ button {
   margin-bottom: 30px;
 }
 
+.section-head h1,
 .section-head h2 {
   font-size: 1.8rem;
   color: var(--primary-dark);
@@ -351,8 +352,10 @@ button {
 
 .card-img {
   width: 100%;
-  height: 160px;
+  aspect-ratio: 1200 / 750;
+  height: auto;
   object-fit: cover;
+  display: block;
 }
 
 .card-body {
@@ -514,7 +517,8 @@ button {
 
 .article-main-img {
   width: 100%;
-  max-height: 420px;
+  aspect-ratio: 1200 / 750;
+  height: auto;
   object-fit: cover;
   border-radius: 12px;
   margin-bottom: 20px;
@@ -852,9 +856,6 @@ footer a:hover {
     gap: 14px;
   }
 
-  .card-img {
-    height: 120px;
-  }
 
   .diagnosis-box,
   .home-diag-wrap {
@@ -1037,4 +1038,37 @@ footer a:hover {
   font-size: 0.78rem;
   color: #6b7a70;
   line-height: 1.45;
+}
+
+/* --- In tendenza --- */
+.trending-intro {
+  max-width: 760px;
+  margin: 0 auto 24px;
+  text-align: center;
+  color: #5a6b60;
+  line-height: 1.5;
+}
+.trending-media {
+  position: relative;
+}
+.trending-rank {
+  position: absolute;
+  bottom: -17px;
+  right: 14px;
+  min-width: 34px;
+  height: 34px;
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  color: var(--primary-dark);
+  font-weight: 800;
+  border-radius: 17px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+.trending-stats {
+  margin: 8px 0 0;
+  font-size: 0.82rem;
+  color: #6b7a70;
 }

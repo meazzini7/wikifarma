@@ -14,7 +14,7 @@ import { getRelated } from '@/lib/related';
 import AffiliateBox from '@/components/AffiliateBox';
 import { getAffiliateProducts } from '@/lib/affiliate';
 import { insertReadAlso, readingMinutes, stripGeneratedImages } from '@/lib/content';
-import { resolveCover } from '@/lib/imageGen';
+import { coverUrl } from '@/lib/coverUrl';
 
 // Senza generateStaticParams ogni pagina articolo viene renderizzata a
 // richiesta (query Firestore comprese) - senza una cache, questo succede
@@ -61,13 +61,13 @@ export async function generateMetadata({ params }) {
       description,
       url: `${SITE_URL}/${post.slug}`,
       type: 'article',
-      images: [resolveCover(post.image_url, post.title, post.category)],
+      images: [coverUrl(post.title, post.category)],
     },
     twitter: {
       card: 'summary_large_image',
       title: post.title,
       description,
-      images: [resolveCover(post.image_url, post.title, post.category)],
+      images: [coverUrl(post.title, post.category)],
     },
   };
 }
@@ -101,7 +101,7 @@ export default async function ArticlePage({ params }) {
     '@type': post.type === 'drug' ? 'MedicalWebPage' : 'Article',
     headline: post.title,
     description,
-    image: resolveCover(post.image_url, post.title, post.category),
+    image: coverUrl(post.title, post.category),
     url,
     datePublished: post.created_at?.toDate?.().toISOString() || undefined,
     dateModified: post.created_at?.toDate?.().toISOString() || undefined,

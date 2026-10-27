@@ -11,6 +11,7 @@ const STATIC_ROUTES = [
   ...LETTERS.map((l) => ({ path: `encyclopedia/${l}`, priority: 0.7, changeFrequency: 'weekly' })),
   { path: 'wellness', priority: 0.8, changeFrequency: 'daily' },
   { path: 'problems', priority: 0.8, changeFrequency: 'daily' },
+  { path: 'tendenza', priority: 0.8, changeFrequency: 'daily' },
   { path: 'diagnosis', priority: 0.7, changeFrequency: 'monthly' },
   { path: 'privacy', priority: 0.2, changeFrequency: 'yearly' },
   { path: 'contact', priority: 0.2, changeFrequency: 'yearly' },

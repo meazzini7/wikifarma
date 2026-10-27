@@ -30,6 +30,7 @@ app/
   diagnosis/page.jsx          Diagnosi AI (client component, chiama /api/diagnose)
   profile/page.jsx            Profilo utente: preferiti + storico diagnosi
   per-te/page.jsx             Raccomandazioni personalizzate (preferiti + cronologia letture)
+  tendenza/page.jsx           "In tendenza": top 10 per letture x tempo di lettura (14 gg, da GA4), automatica
   admin/page.jsx              Pannello admin protetto (generazione articoli, eliminazione)
   admin/insights/page.jsx     Pannello SEGRETO di valutazione (temi/articoli che rendono, strategia, dove spingere)
   privacy/, contact/          Pagine statiche
@@ -48,9 +49,10 @@ lib/
   favorites.js                  Preferiti + storico letture (collections favorites, reading_history)
   gemini.js, prompts.js         Client Gemini + prompt per farmaco/benessere/problemi
   articleGenerator.js           Logica condivisa di generazione articolo (usata dai cron)
-  imageGen.js                   Copertine: SOLO foto reali (pool Unsplash curato per categoria, scelto per hash del titolo).
-                                 Niente immagini AI: pollinations.ai eliminato; gli URL pollinations ancora salvati nei vecchi
-                                 articoli sono sostituiti a runtime (resolveCover, stripGeneratedImages in content.js)
+  cover.js                      Copertine GENERATE DAL CODICE (SVG unico per titolo+categoria: colori/forme/testo da hash). Nessun file
+                                 esterno => mai rotte, mai ripetute, mai senza immagine. coverUrl.js + app/api/cover (PNG edge, immutable)
+                                 per og:image/JSON-LD. I vecchi image_url (pool Unsplash/pollinations) NON si usano piu' (SafeImage li ignora);
+                                 stripGeneratedImages (content.js) toglie le immagini AI inline dai vecchi testi
   content.js                    Inserimento immagine inline a meta' articolo (tra due paragrafi)
   cleanContent.js                Pulizia output Gemini (fence, doc HTML completo, preamboli)
   cronTopics.js, cronAuth.js     Liste argomenti + verifica secret cron esterno
@@ -73,7 +75,7 @@ components/
   Navbar.jsx, Footer.jsx        Layout globale (menu mobile hamburger)
   LiveSearch.jsx                 Ricerca live con navigazione da tastiera (query diretta a Firestore
                                   dal client, nessuna funzione serverless dedicata)
-  SafeImage.jsx                  Immagine con fallback a cascata (generata -> pool -> placeholder)
+  SafeImage.jsx                  Mostra sempre la copertina generata da lib/cover.js (ignora image_url)
   FavoriteButton.jsx, ShareButtons.jsx, ReadingTracker.jsx
   GAListener.jsx, VisitorTracker.jsx
   GoogleAnalytics.jsx            Script GA4, escluso sotto /admin (le visite admin non sporcano i dati)
@@ -127,8 +129,10 @@ Vedi `.env.example` per la lista completa. In sintesi:
   `lib/articleGenerator.js` ora controlla Firestore prima di generare.
 - La mappa parole-chiave -> foto era troppo piccola (5-20 voci) per centinaia di articoli, causando
   immagini identiche su articoli diversi. `lib/imageGen.js` ora genera un'immagine univoca per titolo
-  via pollinations.ai: SUPERATO, le immagini AI sembravano finte e toglievano credibilita' (volti/ambienti innaturali).
-  Ora solo foto reali dal pool curato; non reintrodurre generatori di immagini AI per le copertine.
+  via pollinations.ai: SUPERATO (immagini AI finte), e poi anche il pool Unsplash (link rotti, foto ripetute e fuori tema,
+  es. un barbiere per l'alluce valgo). Requisito TASSATIVO del proprietario: nessuna immagine uguale su articoli diversi e
+  nessun articolo senza immagine => copertine generate da lib/cover.js. Non reintrodurre pool di foto ne' immagini AI;
+  eventuali foto vere solo con fonte verificata e unica per articolo (es. API Unsplash con chiave) e con fallback a cover.js.
 - `data-ad-slot="AUTO"` (AdSense) non e' mai stato un ID slot valido: rimosso, si usa Auto Ads
   (script scoped alla sola pagina articolo).
 
@@ -181,3 +185,10 @@ incrementali (i18n, performance, nuove feature) da trattare come task a se stant
   (cura personale, dispositivi domestici, libri), mai farmaci/integratori con promesse; nessun box per temi sensibili (oncologia, suicidio,
   dipendenze...), salute sessuale, psiche, urologia/ginecologia, farmaci di classe non riconosciuta.
 - Misura: evento GA4 `affiliate_click` (parametri item, theme, article) -> Eventi in GA4; vendite reali nel report Amazon Associates.
+
+## In tendenza (/tendenza)
+- Top 10 articoli (anche nuovi) per punteggio = letture x (1 + secondi medi di coinvolgimento/60, tetto 180) negli ultimi 14 giorni,
+  soglia minima 3 letture (`trending` in `lib/insights.js`, snapshot schemaVersion 5). Nessuna selezione manuale.
+- Aggiornamento automatico: i cron (`refreshInsightsIfOld`, dopo la generazione e nel giorno libero) tengono fresco lo snapshot GA4
+  e invalidano `/tendenza`; la pagina e' ISR 1h, loader in Data Cache 3h (`getTrendingItems` in `lib/related.js`). Senza dati mostra
+  gli ultimi articoli. `tendenza` e' in RESERVED_PATHS del middleware e nella sitemap.

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { revalidateAfterPublish } from '@/lib/revalidateSite';
+import { refreshInsightsIfOld } from '@/lib/insights';
 import { isAuthorizedCron } from '@/lib/cronAuth';
 import { isFirebaseAdminConfigured } from '@/lib/firebaseAdmin';
 import { isGeminiConfigured } from '@/lib/gemini';
@@ -54,6 +55,9 @@ export async function GET(request) {
       console.error('/api/cron/drugs fallito:', result.error);
       return NextResponse.json(result, { status: 502 });
     }
+    // Dopo la pubblicazione si aggiorna lo snapshot GA4 (se vecchio): alimenta
+    // "In tendenza" e i "piu' letti". Mai bloccante per l'esito del cron.
+    await refreshInsightsIfOld();
     revalidateAfterPublish(result);
     return NextResponse.json(result);
   } catch (err) {

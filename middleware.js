@@ -6,7 +6,7 @@ const SUPPORTED_LANGS = ['en', 'es', 'fr', 'de'];
 // redirect these regardless of browser language.
 const RESERVED_PATHS = new Set([
   'encyclopedia', 'wellness', 'problems', 'diagnosis', 'profile', 'per-te',
-  'admin', 'privacy', 'contact', 'ads.txt', 'sitemap.xml', 'robots.txt',
+  'admin', 'tendenza', 'privacy', 'contact', 'ads.txt', 'sitemap.xml', 'robots.txt',
   'icon.svg', 'favicon.ico',
   ...SUPPORTED_LANGS,
 ]);
