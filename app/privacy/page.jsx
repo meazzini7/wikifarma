@@ -33,6 +33,14 @@ export default function PrivacyPage() {
         .
       </p>
 
+      <h3>Affiliazione Amazon</h3>
+      <p>
+        WikiFarma partecipa al Programma di Affiliazione Amazon EU: in qualità di Affiliato Amazon
+        riceviamo un guadagno dagli acquisti idonei effettuati tramite i link ai prodotti presenti
+        negli articoli, senza alcun costo aggiuntivo per te. I link sono contrassegnati come
+        sponsorizzati. Quando clicchi, Amazon può usare i propri cookie secondo la sua informativa.
+      </p>
+
       <h3>Google Analytics</h3>
       <p>
         Utilizziamo Google Analytics (GA4) per analizzare in forma aggregata l&apos;utilizzo del

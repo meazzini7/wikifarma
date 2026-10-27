@@ -60,11 +60,12 @@ lib/
   insightsSchema.js              SCHEMA_VERSION (4) dello snapshot, separato per non far importare il client GA4 alle pagine pubbliche
   related.js                     Correlati per pertinenza (tema/stile/parole/categoria + popolarita' GA), "piu' letti", anche per le
                                   pagine tradotte; candidati e popolari in Data Cache 6h
+  affiliate.js                   Prodotti Amazon.it per tema (mappa fissa, link di RICERCA col tag, nessun prezzo/API); [] per temi sensibili
   insights.js                    Valutazione da GA4: punteggio prima settimana, gruppi, pesi, soglie, cache 12h
   performance.js                 Classificazione pura: tema (classifyTopic), stile del titolo, scelta pesata
   performanceData.js             Lettura Admin SDK dei metadati degli articoli
   strategy.js                    Piano di generazione: pesi da GA4 + brief/idee Gemini settimanali (strategy/current)
-  constants.js                   ADMIN_EMAIL, SITE_URL, GA_ID, ADSENSE_ID, PLACEHOLDER_IMAGE
+  constants.js                   ADMIN_EMAIL, SITE_URL, GA_ID, ADSENSE_ID, AMAZON_TAG, PLACEHOLDER_IMAGE
 
 components/
   Navbar.jsx, Footer.jsx        Layout globale (menu mobile hamburger)
@@ -75,6 +76,7 @@ components/
   GAListener.jsx, VisitorTracker.jsx
   GoogleAnalytics.jsx            Script GA4, escluso sotto /admin (le visite admin non sporcano i dati)
   InsightsView.jsx               Parte visiva del pannello /admin/insights (incl. card "Fidelizzazione")
+  AffiliateBox.jsx               Box "Prodotti utili" (client: evento GA4 affiliate_click)
   RelatedSection.jsx, Breadcrumb.jsx, ReadingProgress.jsx   Fidelizzazione in pagina articolo (correlati/piu' letti, breadcrumb, barra di lettura)
 ```
 
@@ -167,3 +169,12 @@ incrementali (i18n, performance, nuove feature) da trattare come task a se stant
   nel giorno libero di `cron/content` con `translateNextPopular` (l'articolo piu' letto non ancora tradotto, 1 ogni 2 giorni).
 - Misura: card "Fidelizzazione" in `/admin/insights` (pagine per sessione vs periodo precedente, pagine d'ingresso che trattengono/perdono).
   GA4 report `site` e `landing` in `lib/ga4.js`.
+
+## Affiliazione Amazon (monetizzazione)
+- Store ID `paolomeazzini-21` (Amazon.it, `AMAZON_TAG` in `lib/constants.js`, override con `NEXT_PUBLIC_AMAZON_TAG`). Box "Prodotti utili" in fondo
+  agli articoli italiani (non nelle pagine tradotte), 3 link di RICERCA su amazon.it scelti per tema (`lib/affiliate.js`).
+- Regole da rispettare: avviso di affiliazione nel box + footer + privacy; link con `rel="sponsored nofollow noopener noreferrer"`;
+  NON mostrare prezzi/immagini Amazon senza PA-API; niente link nelle email. Sito di salute: solo prodotti da banco di uso comune
+  (cura personale, dispositivi domestici, libri), mai farmaci/integratori con promesse; nessun box per temi sensibili (oncologia, suicidio,
+  dipendenze...), salute sessuale, psiche, urologia/ginecologia, farmaci di classe non riconosciuta.
+- Misura: evento GA4 `affiliate_click` (parametri item, theme, article) -> Eventi in GA4; vendite reali nel report Amazon Associates.

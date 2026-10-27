@@ -11,6 +11,8 @@ import Breadcrumb, { categoryHref, categoryLabel } from '@/components/Breadcrumb
 import ReadingProgress from '@/components/ReadingProgress';
 import RelatedSection, { PopularList } from '@/components/RelatedSection';
 import { getRelated } from '@/lib/related';
+import AffiliateBox from '@/components/AffiliateBox';
+import { getAffiliateProducts } from '@/lib/affiliate';
 import { insertReadAlso, readingMinutes } from '@/lib/content';
 
 // Senza generateStaticParams ogni pagina articolo viene renderizzata a
@@ -88,6 +90,7 @@ export default async function ArticlePage({ params }) {
       }));
   const bodyHtml = readAlso ? insertReadAlso(post.content || '', readAlso) : post.content || '';
   const minutes = readingMinutes(post.content);
+  const affiliate = getAffiliateProducts(post);
   const url = `${SITE_URL}/${post.slug}`;
   const description = stripHtml(post.content).slice(0, 200);
 
@@ -168,6 +171,8 @@ export default async function ArticlePage({ params }) {
 
         {/* Contenuto generato dall'admin panel AI (fase 7): sorgente attendibile, non input utente. */}
         <div className="article-content" dangerouslySetInnerHTML={{ __html: bodyHtml }} />
+
+        <AffiliateBox items={affiliate.items} theme={affiliate.theme} slug={post.slug} />
 
         <div className="disclaimer-box">
           ⚠️ Le informazioni qui riportate non sostituiscono il parere del medico.
