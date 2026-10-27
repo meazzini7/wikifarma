@@ -6,7 +6,7 @@ import SafeImage from '@/components/SafeImage';
 import ReadingProgress from '@/components/ReadingProgress';
 import RelatedSection, { PopularList } from '@/components/RelatedSection';
 import { getRelated } from '@/lib/related';
-import { insertReadAlso, readingMinutes } from '@/lib/content';
+import { insertReadAlso, readingMinutes, stripGeneratedImages } from '@/lib/content';
 
 const DISCLAIMERS = {
   en: '⚠️ The information provided here does not replace medical advice. If in doubt, consult your doctor.',
@@ -85,7 +85,8 @@ export default async function TranslatedArticlePage({ params }) {
   const ui = UI[lang];
   const rel = await getRelated(post, { lang });
   const readAlso = rel?.related[0] || null;
-  const bodyHtml = readAlso ? insertReadAlso(translated.content, readAlso, ui.also) : translated.content;
+  const cleanHtml = stripGeneratedImages(translated.content);
+  const bodyHtml = readAlso ? insertReadAlso(cleanHtml, readAlso, ui.also) : cleanHtml;
   const minutes = readingMinutes(translated.content);
 
   return (

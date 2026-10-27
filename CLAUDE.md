@@ -48,8 +48,9 @@ lib/
   favorites.js                  Preferiti + storico letture (collections favorites, reading_history)
   gemini.js, prompts.js         Client Gemini + prompt per farmaco/benessere/problemi
   articleGenerator.js           Logica condivisa di generazione articolo (usata dai cron)
-  imageGen.js                   Immagini: pollinations.ai primario (univoco per titolo) +
-                                 pool Unsplash curato come fallback (scelto per hash del titolo)
+  imageGen.js                   Copertine: SOLO foto reali (pool Unsplash curato per categoria, scelto per hash del titolo).
+                                 Niente immagini AI: pollinations.ai eliminato; gli URL pollinations ancora salvati nei vecchi
+                                 articoli sono sostituiti a runtime (resolveCover, stripGeneratedImages in content.js)
   content.js                    Inserimento immagine inline a meta' articolo (tra due paragrafi)
   cleanContent.js                Pulizia output Gemini (fence, doc HTML completo, preamboli)
   cronTopics.js, cronAuth.js     Liste argomenti + verifica secret cron esterno
@@ -60,7 +61,8 @@ lib/
   insightsSchema.js              SCHEMA_VERSION (4) dello snapshot, separato per non far importare il client GA4 alle pagine pubbliche
   related.js                     Correlati per pertinenza (tema/stile/parole/categoria + popolarita' GA), "piu' letti", anche per le
                                   pagine tradotte; candidati e popolari in Data Cache 6h
-  affiliate.js                   Prodotti Amazon.it per tema (mappa fissa, link di RICERCA col tag, nessun prezzo/API); [] per temi sensibili
+  affiliate.js                   Prodotti Amazon.it per tema (mappa fissa con ASIN reali: link /dp/ASIN?tag= + foto ufficiale dal widget
+                                  immagini Associates; nessun prezzo); [] per temi sensibili
   insights.js                    Valutazione da GA4: punteggio prima settimana, gruppi, pesi, soglie, cache 12h
   performance.js                 Classificazione pura: tema (classifyTopic), stile del titolo, scelta pesata
   performanceData.js             Lettura Admin SDK dei metadati degli articoli
@@ -125,7 +127,8 @@ Vedi `.env.example` per la lista completa. In sintesi:
   `lib/articleGenerator.js` ora controlla Firestore prima di generare.
 - La mappa parole-chiave -> foto era troppo piccola (5-20 voci) per centinaia di articoli, causando
   immagini identiche su articoli diversi. `lib/imageGen.js` ora genera un'immagine univoca per titolo
-  via pollinations.ai, con pool curato solo come fallback su errore di caricamento.
+  via pollinations.ai: SUPERATO, le immagini AI sembravano finte e toglievano credibilita' (volti/ambienti innaturali).
+  Ora solo foto reali dal pool curato; non reintrodurre generatori di immagini AI per le copertine.
 - `data-ad-slot="AUTO"` (AdSense) non e' mai stato un ID slot valido: rimosso, si usa Auto Ads
   (script scoped alla sola pagina articolo).
 
@@ -172,9 +175,9 @@ incrementali (i18n, performance, nuove feature) da trattare come task a se stant
 
 ## Affiliazione Amazon (monetizzazione)
 - Tracking ID `wikifarma7-21` (Amazon.it; lo Store ID paolomeazzini-21 raggruppa i tracking ID, il parametro `tag` usa il tracking ID; `AMAZON_TAG` in `lib/constants.js`, override con `NEXT_PUBLIC_AMAZON_TAG`). Box "Prodotti utili" in fondo
-  agli articoli italiani (non nelle pagine tradotte), 3 link di RICERCA su amazon.it scelti per tema (`lib/affiliate.js`).
+  agli articoli italiani (non nelle pagine tradotte), fino a 3 prodotti reali scelti per tema (`lib/affiliate.js`, ASIN da sostituire se un prodotto non e' piu' disponibile).
 - Regole da rispettare: avviso di affiliazione nel box + footer + privacy; link con `rel="sponsored nofollow noopener noreferrer"`;
-  NON mostrare prezzi/immagini Amazon senza PA-API; niente link nelle email. Sito di salute: solo prodotti da banco di uso comune
+  NON mostrare prezzi Amazon senza PA-API; le foto solo tramite il widget ufficiale (ws-eu.amazon-adsystem.com, `ID=AsinImage`), mai scaricate/copiate; niente link nelle email. Sito di salute: solo prodotti da banco di uso comune
   (cura personale, dispositivi domestici, libri), mai farmaci/integratori con promesse; nessun box per temi sensibili (oncologia, suicidio,
   dipendenze...), salute sessuale, psiche, urologia/ginecologia, farmaci di classe non riconosciuta.
 - Misura: evento GA4 `affiliate_click` (parametri item, theme, article) -> Eventi in GA4; vendite reali nel report Amazon Associates.

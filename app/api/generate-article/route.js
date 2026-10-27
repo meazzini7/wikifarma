@@ -2,8 +2,7 @@ import { NextResponse } from 'next/server';
 import { callGemini, isGeminiConfigured } from '@/lib/gemini';
 import { requireAdmin } from '@/lib/verifyAdmin';
 import { buildAdminBlogPrompt, buildDrugPrompt } from '@/lib/prompts';
-import { buildArticleImages } from '@/lib/imageGen';
-import { insertInlineImage } from '@/lib/content';
+import { getFallbackForTitle } from '@/lib/imageGen';
 import { cleanGeneratedContent } from '@/lib/cleanContent';
 
 export const maxDuration = 60;
@@ -32,14 +31,12 @@ export async function POST(request) {
 
   try {
     const prompt = type === 'drug' ? buildDrugPrompt(topic) : buildAdminBlogPrompt(topic);
-    const [raw, images] = await Promise.all([callGemini(prompt), buildArticleImages(topic, category)]);
+    const raw = await callGemini(prompt);
     if (!raw) {
       return NextResponse.json({ error: 'Risposta AI vuota.' }, { status: 502 });
     }
     const content = cleanGeneratedContent(raw);
-    const { cover, inline, fallback } = images;
-    const finalContent = insertInlineImage(content, inline, topic, fallback);
-    return NextResponse.json({ content: finalContent, image_url: cover });
+    return NextResponse.json({ content, image_url: getFallbackForTitle(topic, category) });
   } catch {
     return NextResponse.json({ error: 'Errore del servizio AI.' }, { status: 500 });
   }

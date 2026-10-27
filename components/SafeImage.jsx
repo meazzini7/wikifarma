@@ -1,17 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { getFallbackForTitle } from '@/lib/imageGen';
+import { getFallbackForTitle, resolveCover } from '@/lib/imageGen';
 import { PLACEHOLDER_IMAGE } from '@/lib/constants';
 
-// Cover images are AI-generated URLs (pollinations.ai) which can
-// occasionally 404 or fail to render (the classic "broken image" icon).
-// Swap to a reliable curated photo on error (picked deterministically from
-// the title, so different articles don't all collapse onto one identical
-// fallback image), and to a generic placeholder if even that fails.
+// Mostra solo foto reali: un URL generato da AI (articoli vecchi) viene
+// sostituito subito con la foto del pool scelta in base al titolo. Se la foto
+// non si carica, si passa al pool e poi a un placeholder generico.
 export default function SafeImage({ src, category, alt, className, style, loading = 'lazy' }) {
   const fallback = getFallbackForTitle(alt, category);
-  const [current, setCurrent] = useState(src || fallback);
+  const [current, setCurrent] = useState(resolveCover(src, alt, category));
   const [stage, setStage] = useState(0);
 
   function handleError() {

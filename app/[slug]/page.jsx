@@ -13,7 +13,8 @@ import RelatedSection, { PopularList } from '@/components/RelatedSection';
 import { getRelated } from '@/lib/related';
 import AffiliateBox from '@/components/AffiliateBox';
 import { getAffiliateProducts } from '@/lib/affiliate';
-import { insertReadAlso, readingMinutes } from '@/lib/content';
+import { insertReadAlso, readingMinutes, stripGeneratedImages } from '@/lib/content';
+import { resolveCover } from '@/lib/imageGen';
 
 // Senza generateStaticParams ogni pagina articolo viene renderizzata a
 // richiesta (query Firestore comprese) - senza una cache, questo succede
@@ -60,13 +61,13 @@ export async function generateMetadata({ params }) {
       description,
       url: `${SITE_URL}/${post.slug}`,
       type: 'article',
-      images: post.image_url ? [post.image_url] : undefined,
+      images: [resolveCover(post.image_url, post.title, post.category)],
     },
     twitter: {
       card: 'summary_large_image',
       title: post.title,
       description,
-      images: post.image_url ? [post.image_url] : undefined,
+      images: [resolveCover(post.image_url, post.title, post.category)],
     },
   };
 }
@@ -88,7 +89,8 @@ export default async function ArticlePage({ params }) {
         image_url: r.image_url,
         href: `/${r.slug}`,
       }));
-  const bodyHtml = readAlso ? insertReadAlso(post.content || '', readAlso) : post.content || '';
+  const cleanHtml = stripGeneratedImages(post.content || '');
+  const bodyHtml = readAlso ? insertReadAlso(cleanHtml, readAlso) : cleanHtml;
   const minutes = readingMinutes(post.content);
   const affiliate = getAffiliateProducts(post);
   const url = `${SITE_URL}/${post.slug}`;
@@ -99,7 +101,7 @@ export default async function ArticlePage({ params }) {
     '@type': post.type === 'drug' ? 'MedicalWebPage' : 'Article',
     headline: post.title,
     description,
-    image: post.image_url || undefined,
+    image: resolveCover(post.image_url, post.title, post.category),
     url,
     datePublished: post.created_at?.toDate?.().toISOString() || undefined,
     dateModified: post.created_at?.toDate?.().toISOString() || undefined,
