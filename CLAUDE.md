@@ -171,7 +171,7 @@ incrementali (i18n, performance, nuove feature) da trattare come task a se stant
   GA4 report `site` e `landing` in `lib/ga4.js`.
 
 ## Affiliazione Amazon (monetizzazione)
-- Store ID `paolomeazzini-21` (Amazon.it, `AMAZON_TAG` in `lib/constants.js`, override con `NEXT_PUBLIC_AMAZON_TAG`). Box "Prodotti utili" in fondo
+- Tracking ID `wikifarma7-21` (Amazon.it; lo Store ID paolomeazzini-21 raggruppa i tracking ID, il parametro `tag` usa il tracking ID; `AMAZON_TAG` in `lib/constants.js`, override con `NEXT_PUBLIC_AMAZON_TAG`). Box "Prodotti utili" in fondo
   agli articoli italiani (non nelle pagine tradotte), 3 link di RICERCA su amazon.it scelti per tema (`lib/affiliate.js`).
 - Regole da rispettare: avviso di affiliazione nel box + footer + privacy; link con `rel="sponsored nofollow noopener noreferrer"`;
   NON mostrare prezzi/immagini Amazon senza PA-API; niente link nelle email. Sito di salute: solo prodotti da banco di uso comune
