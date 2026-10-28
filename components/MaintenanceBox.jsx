@@ -11,7 +11,7 @@ export default function MaintenanceBox({ user }) {
   const [report, setReport] = useState(null);
   const [msg, setMsg] = useState(null);
 
-  async function call(action) {
+  async function call(action, totals = { assigned: 0, rounds: 0 }) {
     setBusy(action);
     setMsg(null);
     try {
@@ -32,8 +32,20 @@ export default function MaintenanceBox({ user }) {
       } else if (action === 'regenerate') {
         setMsg({ ok: true, text: `Riscritti ${data.regenerated?.length || 0} articoli${data.failed?.length ? `, ${data.failed.length} non riusciti` : ''}. Ne restano ${data.remaining ?? 0}.` });
       } else if (action === 'photos') {
-        if (data.ok === false) setMsg({ ok: false, text: data.error });
-        else setMsg({ ok: true, text: `Foto assegnate: ${data.assigned}. Articoli ancora senza foto: ${data.remaining}.${data.stopped ? ` (${data.stopped})` : ''}` });
+        if (data.ok === false) {
+          setMsg({ ok: false, text: data.error });
+        } else {
+          totals.assigned += data.assigned || 0;
+          const text = `Foto assegnate: ${totals.assigned}. Articoli ancora senza foto: ${data.remaining}.${data.stopped ? ` (${data.stopped})` : ''}`;
+          // Continua da solo finche' ci sono articoli da servire e Unsplash risponde.
+          if (data.assigned > 0 && data.remaining > 0 && !data.stopped && totals.rounds < 8) {
+            totals.rounds += 1;
+            setMsg({ ok: true, text: `${text} Continuo...` });
+            await call('photos', totals);
+            return;
+          }
+          setMsg({ ok: !data.stopped, text: data.remaining === 0 ? `✅ Fatto: ${text}` : text });
+        }
       }
     } catch (err) {
       setMsg({ ok: false, text: err.message });

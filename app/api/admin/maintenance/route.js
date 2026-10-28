@@ -36,8 +36,8 @@ export async function POST(request) {
       if (!isUnsplashConfigured()) {
         return NextResponse.json({ ok: false, error: 'Manca UNSPLASH_ACCESS_KEY su Vercel (Settings > Environment Variables) e un nuovo deploy.' });
       }
-      const res = await assignPhotos({ limit: 30 });
-      const tracking = await trackPending({ limit: 20 });
+      const res = await assignPhotos({ limit: 120 });
+      const tracking = await trackPending({ limit: 15 });
       return NextResponse.json({ ...res, ...tracking });
     }
     return NextResponse.json({ error: 'Azione non valida.' }, { status: 400 });
