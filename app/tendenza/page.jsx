@@ -27,7 +27,7 @@ export default async function TrendingPage() {
   let fallback = [];
   if (items.length === 0) {
     try {
-      fallback = (await getRecentPosts(10)).map((p) => ({ slug: p.slug, title: p.title, category: p.category, href: `/${p.slug}` }));
+      fallback = (await getRecentPosts(10)).map((p) => ({ slug: p.slug, title: p.title, category: p.category, image_url: p.image_url || null, href: `/${p.slug}` }));
     } catch (err) {
       console.error('tendenza: ultimi articoli non disponibili:', err);
     }

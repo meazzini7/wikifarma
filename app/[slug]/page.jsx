@@ -14,6 +14,7 @@ import { getRelated } from '@/lib/related';
 import AffiliateBox from '@/components/AffiliateBox';
 import { getAffiliateProducts } from '@/lib/affiliate';
 import { insertReadAlso, readingMinutes, stripGeneratedImages } from '@/lib/content';
+import { normalizeArticleHtml } from '@/lib/formatContent';
 import { coverUrl } from '@/lib/coverUrl';
 
 // Senza generateStaticParams ogni pagina articolo viene renderizzata a
@@ -89,7 +90,7 @@ export default async function ArticlePage({ params }) {
         image_url: r.image_url,
         href: `/${r.slug}`,
       }));
-  const cleanHtml = stripGeneratedImages(post.content || '');
+  const cleanHtml = normalizeArticleHtml(stripGeneratedImages(post.content || ''));
   const bodyHtml = readAlso ? insertReadAlso(cleanHtml, readAlso) : cleanHtml;
   const minutes = readingMinutes(post.content);
   const affiliate = getAffiliateProducts(post);

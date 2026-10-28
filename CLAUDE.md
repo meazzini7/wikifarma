@@ -58,7 +58,8 @@ lib/
                                  per og:image/JSON-LD. I vecchi image_url (pool Unsplash/pollinations) NON si usano piu' (SafeImage li ignora);
                                  stripGeneratedImages (content.js) toglie le immagini AI inline dai vecchi testi
   content.js                    Inserimento immagine inline a meta' articolo (tra due paragrafi)
-  cleanContent.js                Pulizia output Gemini (fence, doc HTML completo, preamboli)
+  cleanContent.js                Pulizia output Gemini (fence, doc HTML completo, preamboli) + formatContent.js: testo markdown/senza <p> -> HTML
+                                 (asterischi, elenchi, paragrafi). Applicato in generazione, in visualizzazione (pagine articolo) e dal pannello di manutenzione
   cronTopics.js, cronAuth.js     Liste argomenti + verifica secret cron esterno
   email.js                      Notifica Resend (degrada in silenzio se non configurata)
   verifyAdmin.js                 Verifica JWT Firebase (per gating /api/generate-article)
@@ -205,5 +206,5 @@ incrementali (i18n, performance, nuove feature) da trattare come task a se stant
   si ferma da solo a quota esaurita; modalita' demo = 50 richieste/ora, si lancia piu' volte o si chiede l'approvazione "production" a Unsplash).
   Il "download tracking" richiesto da Unsplash parte dai cron (10 per esecuzione) e dal pulsante.
 - Pannello admin > "Manutenzione articoli": CONTROLLA (report difetti, nessuna modifica), RIPARA AUTOMATICAMENTE (HTML grezzo, <h1>, preamboli AI,
-  commenti WordPress, immagini AI inline, caratteri rovinati, titoli con #1234, categoria mancante), RISCRIVI I ROTTI (testo vuoto/corto/troncato,
+  commenti WordPress, immagini AI inline, testo in markdown senza paragrafi/elenchi, caratteri rovinati, titoli con #1234, categoria mancante), RISCRIVI I ROTTI (testo vuoto/corto/troncato,
   3 per volta, mai sovrascrive con meno di 1000 caratteri). Doppioni di titolo e tag sbilanciati sono solo segnalati.
