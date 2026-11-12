@@ -8,7 +8,7 @@ import { isGeminiConfigured } from '@/lib/gemini';
 import { buildDrugPrompt } from '@/lib/prompts';
 import { DRUG_TOPICS } from '@/lib/cronTopics';
 import { generateAndSaveArticle, pickSequentialTopic } from '@/lib/articleGenerator';
-import { chooseDrugTopic, getGenerationPlan } from '@/lib/strategy';
+import { chooseDrugTopic, dailyCategory, getGenerationPlan } from '@/lib/strategy';
 
 export const maxDuration = 60;
 
@@ -20,22 +20,16 @@ export async function GET(request) {
     return NextResponse.json({ skipped: true, reason: 'GEMINI_API_KEY o Firebase Admin non configurati.' });
   }
 
-  // Generazione dimezzata su richiesta esplicita (contenere CPU/quota e dare
-  // priorita' alla qualita' sul volume): farmaci nei giorni pari, benessere/
-  // problemi (vedi api/cron/content) nei giorni dispari - un solo articolo
-  // al giorno in totale invece di due. Il cron-job.org esterno continua a
-  // chiamare questa route ogni giorno; e' la route stessa a saltare.
-  const dayOfYear = Math.floor(
-    (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000
-  );
-  if (dayOfYear % 2 !== 0) {
-    return NextResponse.json({ skipped: true, reason: 'Generazione farmaci a giorni alterni: oggi tocca a benessere/problemi.' });
+  // Un solo articolo al giorno in totale (contenere CPU/quota). La categoria
+  // del giorno e' decisa una volta sola per entrambe le route (dailyCategory):
+  // questa genera solo se oggi tocca a "Farmaco". Il cron-job.org esterno
+  // continua a chiamarla ogni giorno; e' la route stessa a saltare.
+  const plan = await getGenerationPlan();
+  if (dailyCategory(plan) !== 'Farmaco') {
+    return NextResponse.json({ skipped: true, reason: 'Oggi la categoria scelta non e\' Farmaco (vedi api/cron/content).' });
   }
 
   try {
-    // Il piano (pesi appresi da GA4) e' opzionale: senza dati sufficienti, o
-    // in caso di errore, si segue la lista storica come prima.
-    const plan = await getGenerationPlan();
     const chosen = await chooseDrugTopic({ plan }).catch(() => null);
     const topic = chosen ? chosen.topic : await pickSequentialTopic(DRUG_TOPICS);
     if (!topic) {

@@ -36,9 +36,10 @@ export default function MaintenanceBox({ user }) {
           setMsg({ ok: false, text: data.error });
         } else {
           totals.assigned += data.assigned || 0;
-          const text = `Foto assegnate: ${totals.assigned}. Articoli ancora senza foto: ${data.remaining}.${data.stopped ? ` (${data.stopped})` : ''}`;
+          totals.replaced = (totals.replaced || 0) + (data.replaced || 0);
+          const text = `Foto assegnate: ${totals.assigned}${totals.replaced ? `, sostituite perche' fuori tema: ${totals.replaced}` : ''}. Articoli ancora senza foto: ${data.remaining}.${data.stopped ? ` (${data.stopped})` : ''}`;
           // Continua da solo finche' ci sono articoli da servire e Unsplash risponde.
-          if (data.assigned > 0 && data.remaining > 0 && !data.stopped && totals.rounds < 8) {
+          if ((data.assigned > 0 || data.replaced > 0) && !data.stopped && totals.rounds < 10) {
             totals.rounds += 1;
             setMsg({ ok: true, text: `${text} Continuo...` });
             await call('photos', totals);
@@ -97,6 +98,12 @@ export default function MaintenanceBox({ user }) {
             <p>
               ⚠️ Titoli doppi: {report.duplicates.slice(0, 8).map((d) => `${d.title} (${d.slugs.length})`).join('; ')}
               {report.duplicates.length > 8 ? '…' : ''}
+            </p>
+          )}
+          {report.sameSubject?.length > 0 && (
+            <p>
+              ⚠️ Più guide sullo stesso soggetto (contenuto doppio per Google, valuta di tenerne una): {report.sameSubject.slice(0, 10).map((d) => `${d.subject} (${d.slugs.length})`).join('; ')}
+              {report.sameSubject.length > 10 ? '…' : ''}
             </p>
           )}
           {report.items?.length > 0 && (

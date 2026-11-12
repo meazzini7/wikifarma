@@ -8,7 +8,7 @@ import { isGeminiConfigured } from '@/lib/gemini';
 import { buildProblemsPrompt, buildWellnessPrompt } from '@/lib/prompts';
 import { PROBLEMS_TOPICS, WELLNESS_TOPICS } from '@/lib/cronTopics';
 import { generateAndSaveArticle, pickRandomTopic } from '@/lib/articleGenerator';
-import { chooseCategory, chooseContentTopic, getGenerationPlan, refreshStrategyIfStale, translateNextPopular } from '@/lib/strategy';
+import { chooseContentTopic, dailyCategory, getGenerationPlan, refreshStrategyIfStale, translateNextPopular } from '@/lib/strategy';
 
 export const maxDuration = 60;
 
@@ -24,10 +24,13 @@ export async function GET(request) {
     return NextResponse.json({ skipped: true, reason: 'GEMINI_API_KEY o Firebase Admin non configurati.' });
   }
 
-  const dayOfYear = Math.floor(
-    (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000
-  );
-  if (dayOfYear % 2 === 0) {
+  // Il piano (pesi appresi da GA4) e' opzionale: senza dati sufficienti, o in
+  // caso di errore, si torna ad alternare come prima. La categoria del giorno
+  // (farmaco / benessere / problemi) e' decisa una volta sola per entrambe le
+  // route (vedi dailyCategory): questa genera solo se oggi non e' "Farmaco".
+  const plan = await getGenerationPlan();
+  const today = dailyCategory(plan);
+  if (today === 'Farmaco') {
     // Giorno libero di questa route: se la strategia editoriale e' scaduta
     // (o non esiste ancora) la ricostruiamo ora, con tutto il tempo a
     // disposizione, cosi' i giorni di generazione si limitano a leggerla.
@@ -50,18 +53,14 @@ export async function GET(request) {
     if (!strategyRefresh?.refreshed) await refreshInsightsIfOld();
     return NextResponse.json({
       skipped: true,
-      reason: 'Generazione benessere/problemi a giorni alterni: oggi tocca ai farmaci.',
+      reason: 'Oggi la categoria scelta e\' Farmaco (vedi api/cron/drugs).',
       strategy: strategyRefresh,
       translation,
     });
   }
-  const defaultCategory = Math.floor(dayOfYear / 2) % 2 === 0 ? 'Benessere' : 'Problemi Frequenti';
 
   try {
-    // Il piano (pesi appresi da GA4) e' opzionale: senza dati sufficienti, o
-    // in caso di qualsiasi errore, si genera a caso esattamente come prima.
-    const plan = await getGenerationPlan();
-    const category = chooseCategory(plan, defaultCategory);
+    const category = today;
     const isWellness = category === 'Benessere';
     const topics = isWellness ? WELLNESS_TOPICS : PROBLEMS_TOPICS;
     const promptBuilder = isWellness ? buildWellnessPrompt : buildProblemsPrompt;

@@ -65,7 +65,7 @@ lib/
   verifyAdmin.js                 Verifica JWT Firebase (per gating /api/generate-article)
   gtag.js                        Helper eventi GA4 custom
   ga4.js                         Client GA4 Data API (runReport) col service account di Firebase Admin
-  insightsSchema.js              SCHEMA_VERSION (4) dello snapshot, separato per non far importare il client GA4 alle pagine pubbliche
+  insightsSchema.js              SCHEMA_VERSION (5) dello snapshot, separato per non far importare il client GA4 alle pagine pubbliche
   related.js                     Correlati per pertinenza (tema/stile/parole/categoria + popolarita' GA), "piu' letti", anche per le
                                   pagine tradotte; candidati e popolari in Data Cache 6h
   affiliate.js                   Prodotti Amazon.it per tema (mappa fissa con ASIN reali: link /dp/ASIN?tag= + foto ufficiale dal widget
@@ -73,13 +73,16 @@ lib/
   insights.js                    Valutazione da GA4: punteggio prima settimana, gruppi, pesi, soglie, cache 12h
   performance.js                 Classificazione pura: tema (classifyTopic), stile del titolo, scelta pesata
   performanceData.js             Lettura Admin SDK dei metadati degli articoli
-  strategy.js                    Piano di generazione: pesi da GA4 + brief/idee Gemini settimanali (strategy/current)
+  strategy.js                    Piano di generazione: pesi da GA4 + brief/idee Gemini settimanali (strategy/current); dailyCategory = categoria
+                                 del giorno (farmaco/benessere/problemi) scelta dai pesi, uguale per le due route cron (seed = data)
+  subject.js                     subjectKey: soggetto di un titolo (senza "La verita' su", "(Guida 2026)"...) per evitare guide doppie
   constants.js                   ADMIN_EMAIL, SITE_URL, GA_ID, ADSENSE_ID, AMAZON_TAG, PLACEHOLDER_IMAGE
 
 components/
   Navbar.jsx, Footer.jsx        Layout globale (menu mobile hamburger)
   LiveSearch.jsx                 Ricerca live con navigazione da tastiera (query diretta a Firestore
                                   dal client, nessuna funzione serverless dedicata)
+  AdSense.jsx, AdSlot.jsx        Script AdSense su tutto il sito (non /admin) + unita' in-article opzionale (NEXT_PUBLIC_ADSENSE_SLOT_ARTICLE)
   SafeImage.jsx                  Foto Unsplash assegnata (URL con wf=1) altrimenti copertina generata da lib/cover.js; ignora ogni altro image_url
   FavoriteButton.jsx, ShareButtons.jsx, ReadingTracker.jsx
   GAListener.jsx, VisitorTracker.jsx
@@ -208,3 +211,15 @@ incrementali (i18n, performance, nuove feature) da trattare come task a se stant
 - Pannello admin > "Manutenzione articoli": CONTROLLA (report difetti, nessuna modifica), RIPARA AUTOMATICAMENTE (HTML grezzo, <h1>, preamboli AI,
   commenti WordPress, immagini AI inline, testo in markdown senza paragrafi/elenchi, caratteri rovinati, titoli con #1234, categoria mancante), RISCRIVI I ROTTI (testo vuoto/corto/troncato,
   3 per volta, mai sovrascrive con meno di 1000 caratteri). Doppioni di titolo e tag sbilanciati sono solo segnalati.
+
+## Monetizzazione e SEO tecnico (novembre 2026)
+- Dati di partenza (7 nov): ~160 sessioni/mese, AdSense ~0,16 EUR/30 gg (RPM impressioni 0,75-1,29 EUR), solo Auto ads. Per ~50 EUR/mese servono
+  circa 4.000-6.000 sessioni/mese (traffico, non CPU, e' il collo di bottiglia): le leve sono indicizzazione, annunci ovunque e CMP (consenso).
+- AdSense: script nel layout (tutte le pagine, anche tradotte/home/elenchi), escluso /admin. Per le pagine UE serve il messaggio di consenso
+  (AdSense > Privacy e messaggistica > Normativa europea): senza, gli annunci sono limitati e l'RPM crolla.
+- JSON-LD renderizzato lato server (non <Script afterInteractive>); robots consente /api/cover; metadata/canonical della home; immagini delle
+  schede a 640 px (la principale dell'articolo e' eager/fetchpriority high).
+- Onesta' dei contenuti: niente contatori gonfiati (la home mostra l'ultimo aggiornamento reale) e niente claim non verificabili come
+  "Informazione Certificata" (sito YMYL: Google/AdSense penalizzano le promesse non dimostrabili).
+- Generazione: con apprendimento attivo la categoria del giorno segue i pesi GA4 anche per i farmaci (`dailyCategory`); niente guide diverse
+  sullo stesso soggetto (`subjectKey`); il pannello manutenzione segnala i soggetti doppi e riassegna le foto fuori tema (scene per parola chiave).

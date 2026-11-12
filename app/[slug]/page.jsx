@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
-import Script from 'next/script';
 import { getPostBySlug, getRecommendedPosts } from '@/lib/firestore';
-import { ADSENSE_ID, SITE_URL } from '@/lib/constants';
+import { SITE_URL } from '@/lib/constants';
+import AdSlot from '@/components/AdSlot';
 import { isTranslatable, SUPPORTED_LANGS } from '@/lib/translate';
 import SafeImage from '@/components/SafeImage';
 import FavoriteButton from '@/components/FavoriteButton';
@@ -13,7 +13,7 @@ import RelatedSection, { PopularList } from '@/components/RelatedSection';
 import { getRelated } from '@/lib/related';
 import AffiliateBox from '@/components/AffiliateBox';
 import { getAffiliateProducts } from '@/lib/affiliate';
-import { insertReadAlso, readingMinutes, stripGeneratedImages } from '@/lib/content';
+import { insertReadAlso, readingMinutes, splitHtmlAt, stripGeneratedImages } from '@/lib/content';
 import { normalizeArticleHtml } from '@/lib/formatContent';
 import { coverUrl } from '@/lib/coverUrl';
 
@@ -73,6 +73,9 @@ export async function generateMetadata({ params }) {
   };
 }
 
+// '<' escapato: il JSON non puo' chiudere il tag <script> in anticipo.
+const jsonLdString = (obj) => JSON.stringify(obj).replace(/</g, '\\u003c');
+
 export default async function ArticlePage({ params }) {
   const post = await getPostBySlug(params.slug);
   if (!post) notFound();
@@ -93,6 +96,8 @@ export default async function ArticlePage({ params }) {
   const cleanHtml = normalizeArticleHtml(stripGeneratedImages(post.content || ''));
   const bodyHtml = readAlso ? insertReadAlso(cleanHtml, readAlso) : cleanHtml;
   const minutes = readingMinutes(post.content);
+  const AD_SLOT = process.env.NEXT_PUBLIC_ADSENSE_SLOT_ARTICLE || '';
+  const adParts = AD_SLOT ? splitHtmlAt(bodyHtml) : [bodyHtml];
   const affiliate = getAffiliateProducts(post);
   const url = `${SITE_URL}/${post.slug}`;
   const description = stripHtml(post.content).slice(0, 200);
@@ -106,6 +111,7 @@ export default async function ArticlePage({ params }) {
     url,
     datePublished: post.created_at?.toDate?.().toISOString() || undefined,
     dateModified: post.created_at?.toDate?.().toISOString() || undefined,
+    author: { '@type': 'Organization', name: 'Redazione WikiFarma', url: SITE_URL },
     publisher: {
       '@type': 'Organization',
       name: 'WikiFarma',
@@ -130,23 +136,10 @@ export default async function ArticlePage({ params }) {
   return (
     <>
       <ReadingProgress />
-      {/* AdSense Auto ads: caricato solo sulla pagina articolo, come nel sito
-          originale. Nessuna unita' manuale: senza uno slot reale creato
-          nella dashboard AdSense un <ins> con slot fittizio non mostra
-          nulla - Auto ads (da abilitare per il sito in AdSense) decide da
-          solo dove posizionare gli annunci su questa pagina. */}
-      <Script
-        async
-        src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_ID}`}
-        crossOrigin="anonymous"
-        strategy="afterInteractive"
-      />
-      <Script id="article-jsonld" type="application/ld+json" strategy="afterInteractive">
-        {JSON.stringify(jsonLd)}
-      </Script>
-      <Script id="breadcrumb-jsonld" type="application/ld+json" strategy="afterInteractive">
-        {JSON.stringify(breadcrumbLd)}
-      </Script>
+      {/* Dati strutturati nell'HTML del server (non iniettati dal client): cosi'
+          i crawler li leggono subito. Lo script AdSense e' nel layout. */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString(breadcrumbLd) }} />
       <ReadingTracker post={{ id: post.id, slug: post.slug, title: post.title, category: post.category }} />
       <div className="article-page">
         <Breadcrumb category={post.category} title={post.title} />
@@ -157,6 +150,7 @@ export default async function ArticlePage({ params }) {
           category={post.category}
           alt={post.title}
           className="article-main-img"
+          priority
         />
         {post.photo?.author && (
           <p className="photo-credit">
@@ -179,7 +173,15 @@ export default async function ArticlePage({ params }) {
         </div>
 
         {/* Contenuto generato dall'admin panel AI (fase 7): sorgente attendibile, non input utente. */}
-        <div className="article-content" dangerouslySetInnerHTML={{ __html: bodyHtml }} />
+        {adParts.length === 2 ? (
+          <>
+            <div className="article-content" dangerouslySetInnerHTML={{ __html: adParts[0] }} />
+            <AdSlot slot={AD_SLOT} />
+            <div className="article-content" dangerouslySetInnerHTML={{ __html: adParts[1] }} />
+          </>
+        ) : (
+          <div className="article-content" dangerouslySetInnerHTML={{ __html: bodyHtml }} />
+        )}
 
         <AffiliateBox items={affiliate.items} theme={affiliate.theme} slug={post.slug} />
 

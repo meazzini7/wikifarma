@@ -100,6 +100,7 @@ export default async function TranslatedArticlePage({ params }) {
         category={post.category}
         alt={translated.title}
         className="article-main-img"
+        priority
       />
       {post.photo?.author && (
         <p className="photo-credit">

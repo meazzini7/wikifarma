@@ -1082,3 +1082,9 @@ footer a:hover {
   color: inherit;
   text-decoration: underline;
 }
+
+.ad-slot {
+  margin: 28px 0;
+  min-height: 90px;
+  text-align: center;
+}

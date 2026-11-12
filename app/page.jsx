@@ -2,7 +2,6 @@ import Link from 'next/link';
 import LiveSearch from '@/components/LiveSearch';
 import SafeImage from '@/components/SafeImage';
 import { getHomeStats, getRecentPosts } from '@/lib/firestore';
-import { getDisplayVisitorCount } from '@/lib/visitorCounter';
 import RelatedSection from '@/components/RelatedSection';
 import { getPopularItems } from '@/lib/related';
 
@@ -14,9 +13,20 @@ import { getPopularItems } from '@/lib/related';
 // piu' visitata del sito.
 export const revalidate = 21600;
 
+export const metadata = {
+  title: 'WikiFarma: farmaci, guide di salute e benessere in italiano',
+  description:
+    'Schede dei medicinali dalla A alla Z, guide su sintomi, costi e rimedi e consigli di benessere. Informazione di base, non sostituisce il medico.',
+  alternates: { canonical: '/' },
+  openGraph: { title: 'WikiFarma: farmaci, guide di salute e benessere', description: 'Medicinali dalla A alla Z, guide su sintomi, costi e rimedi, consigli di benessere.', url: '/', type: 'website' },
+};
+
 export default async function HomePage() {
   const [stats, recent, popular] = await Promise.all([getHomeStats(), getRecentPosts(9), getPopularItems(6)]);
-  const displayVisitors = getDisplayVisitorCount(stats.visitors);
+  // Data dell'ultimo articolo (dato vero): al posto del vecchio contatore
+  // "utenti" gonfiato artificialmente, che non corrispondeva al traffico reale.
+  const lastDate = recent[0]?.created_at?.toDate?.();
+  const lastUpdate = lastDate ? lastDate.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' }) : '-';
 
   return (
     <>
@@ -34,8 +44,8 @@ export default async function HomePage() {
             <span className="stat-label">GUIDE</span>
           </div>
           <div className="stat-box">
-            <span className="stat-num">{displayVisitors}</span>
-            <span className="stat-label">UTENTI</span>
+            <span className="stat-num">{lastUpdate}</span>
+            <span className="stat-label">ULTIMO AGGIORNAMENTO</span>
           </div>
         </div>
       </header>
@@ -85,8 +95,8 @@ export default async function HomePage() {
             <p>Analizza i tuoi sintomi in tempo reale con l'intelligenza artificiale.</p>
           </div>
           <div className="feature-item">
-            <h3>📚 Informazione Certificata</h3>
-            <p>Contenuti aggiornati quotidianamente.</p>
+            <h3>📚 Contenuti aggiornati ogni giorno</h3>
+            <p>Nuove schede e guide ogni giorno, sempre con l&apos;invito a rivolgersi al medico.</p>
           </div>
         </div>
       </section>

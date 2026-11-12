@@ -5,6 +5,7 @@ import Footer from '@/components/Footer';
 import VisitorTracker from '@/components/VisitorTracker';
 import GAListener from '@/components/GAListener';
 import GoogleAnalytics from '@/components/GoogleAnalytics';
+import AdSense from '@/components/AdSense';
 import { SITE_URL } from '@/lib/constants';
 
 export const metadata = {
@@ -19,6 +20,7 @@ export default function RootLayout({ children }) {
     <html lang="it">
       <body>
         <GoogleAnalytics />
+        <AdSense />
         <Suspense fallback={null}>
           <GAListener />
         </Suspense>
