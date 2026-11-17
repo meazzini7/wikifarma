@@ -7,8 +7,15 @@
 //         genera; l'altro fa solo i lavori del "giorno libero").
 // Stampa l'esito in JSON; exit 0 se tutto ok, 1 se un job e' fallito o manca
 // la configurazione (cosi' GitHub segna la run in rosso e ti avvisa).
-import { runContentCron, runDrugsCron } from '../lib/cronRunners.js';
-import { SITE_URL } from '../lib/constants.js';
+// Import dinamici con interop: i file di lib/ non hanno "type": "module", quindi
+// a seconda della versione di Node/tsx gli export con nome arrivano come export
+// ESM oppure dentro `default`. Cosi' il runner funziona su Node 20 e 22.
+const load = async (path) => {
+  const mod = await import(path);
+  return { ...(mod.default && typeof mod.default === 'object' ? mod.default : {}), ...mod };
+};
+const { runContentCron, runDrugsCron } = await load('../lib/cronRunners.js');
+const { SITE_URL } = await load('../lib/constants.js');
 
 const JOBS = { drugs: runDrugsCron, content: runContentCron };
 const arg = process.argv[2] || 'all';
