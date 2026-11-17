@@ -39,8 +39,9 @@ app/
   api/generate-article/       Generazione manuale da admin panel (protetta da lib/verifyAdmin.js)
   api/track-visit/            Contatore visite privacy-friendly (IP hashato)
   api/admin/insights/         Dati del pannello insights (solo admin, verifica JWT; POST = ricostruisce la strategia)
-  api/cron/drugs/             Cron farmaci (lista prioritaria, sequenziale, dedup)
-  api/cron/content/           Cron benessere/problemi (alterna per giorno, random+dedup)
+  api/cron/drugs/             Route per l'USO MANUALE del cron farmaci (la logica e' in lib/cronRunners.js)
+  api/cron/content/           Route per l'USO MANUALE del cron benessere/problemi (idem)
+  api/revalidate/             POST (Bearer CRON_SECRET): invalida home/elenchi/sitemap/pagina nuova; chiamata dal runner di GitHub Actions
 
 lib/
   firebase.js                 Client SDK (auth lazy-init per non rompere il build)
@@ -48,6 +49,8 @@ lib/
   firestore.js                 Query pubbliche sulla collection posts
   favorites.js                  Preferiti + storico letture (collections favorites, reading_history)
   gemini.js, prompts.js         Client Gemini + prompt per farmaco/benessere/problemi
+  cronRunners.js                runDrugsCron/runContentCron: tutta la logica dei cron, senza Next (usata da route e da scripts/run-cron.mjs)
+  reactCache.js                 cache() di React se disponibile (in Next), altrimenti no-op (runner fuori da Next)
   articleGenerator.js           Logica condivisa di generazione articolo (usata dai cron)
   unsplash.js, photoScenes.js    Foto Unsplash UNICHE per articolo: scene (query EN) -> pool in Firestore (photo_pools/{scena}) -> foto non
                                  ancora usata; credito al fotografo, download tracking, quota demo 50 req/h. Pure e testate senza rete
@@ -116,8 +119,9 @@ Vedi `.env.example` per la lista completa. In sintesi:
 - `GA4_PROPERTY_ID` — ID numerico della PROPRIETA' GA4 (Analytics > Amministrazione > Impostazioni proprieta'),
   non l'ID stream ne' l'ID misurazione G-XXXX. Serve anche: Google Analytics Data API abilitata nel progetto GCP e
   `FIREBASE_ADMIN_CLIENT_EMAIL` aggiunto come Visualizzatore nella proprieta' GA4.
-- `CRON_SECRET` — verificato contro l'header `Authorization: Bearer` inviato da cron-job.org (servizio esterno
-  gratuito; Vercel Cron Jobs richiede piano Pro, non usato)
+- `CRON_SECRET` — verificato dalle route `api/cron/*` e `api/revalidate` (`Authorization: Bearer`). I cron veri NON girano piu' su
+  Vercel ne' su cron-job.org: vedi "Cron su GitHub Actions". Serve solo per l'uso manuale e per l'invalidazione immediata delle pagine.
+- `TRANSLATE_ON_DEMAND_LANGS` — lingue tradotte alla prima richiesta (default `en`); le altre servono solo traduzioni gia' in cache
 
 ## Convenzioni codice
 - Componenti in `app/` (App Router), client component solo dove serve interattivita'/auth (`'use client'`)
@@ -223,3 +227,18 @@ incrementali (i18n, performance, nuove feature) da trattare come task a se stant
   "Informazione Certificata" (sito YMYL: Google/AdSense penalizzano le promesse non dimostrabili).
 - Generazione: con apprendimento attivo la categoria del giorno segue i pesi GA4 anche per i farmaci (`dailyCategory`); niente guide diverse
   sullo stesso soggetto (`subjectKey`); il pannello manutenzione segnala i soggetti doppi e riassegna le foto fuori tema (scene per parola chiave).
+
+## Cron su GitHub Actions (da novembre 2026)
+- Motivo: i cron consumavano ~52% della Fluid Active CPU di Vercel con ~160 sessioni/mese. Ora il lavoro (Gemini, Firestore, GA4, Unsplash,
+  Resend) gira su GitHub Actions: `.github/workflows/cron.yml` -> `scripts/run-cron.mjs` (`npx tsx`, job `drugs` | `content` | `all`).
+  La logica e' in `lib/cronRunners.js` (nessun import di Next); le route `api/cron/*` la richiamano solo per l'uso manuale.
+- Una esecuzione al giorno (`all`): farmaci e poi contenuti; `dailyCategory` decide quale dei due genera (1 articolo/giorno), l'altro fa il
+  "giorno libero" (strategia settimanale, traduzione dell'articolo piu' letto, snapshot GA4). `concurrency` impedisce due run insieme.
+- Il runner esce con codice 1 se un job fallisce o se mancano i secrets (la run diventa rossa e GitHub invia la mail). Con `CRON_SECRET` nei
+  secrets chiama anche `POST /api/revalidate` (una richiesta minima); senza, home/elenchi si aggiornano con l'ISR (6 ore).
+- Secrets richiesti (Settings > Secrets and variables > Actions): FIREBASE_ADMIN_CLIENT_EMAIL, FIREBASE_ADMIN_PRIVATE_KEY, NEXT_PUBLIC_FIREBASE_*
+  (6), GEMINI_API_KEY, UNSPLASH_ACCESS_KEY, GA4_PROPERTY_ID, RESEND_API_KEY, ADMIN_NOTIFICATION_EMAIL; facoltativi FIREBASE_ADMIN_PROJECT_ID,
+  NEXT_PUBLIC_SITE_URL, CRON_SECRET.
+- Attenzione: GitHub disattiva i workflow pianificati dopo 60 giorni senza attivita' nel repository (repo pubblici): un commit ogni tanto basta.
+- Consumo Vercel: sitemap ora legge solo i campi necessari (Admin SDK `select`); le traduzioni non si generano piu' alla richiesta per es/fr/de
+  (solo en); pagine tradotte con ISR di 7 giorni.

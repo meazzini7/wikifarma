@@ -1,0 +1,66 @@
+name: Cron WikiFarma
+
+# Generazione quotidiana degli articoli e manutenzione automatica, fuori da
+# Vercel (Fluid Active CPU). Sostituisce i due job di cron-job.org: DISATTIVARE
+# quelli, altrimenti il lavoro gira due volte.
+on:
+  schedule:
+    # Una volta al giorno, UTC (06:17 in inverno / 07:17 in estate in Italia).
+    # Minuto "storto" apposta: GitHub ritarda i job allo scoccare dell'ora esatta.
+    - cron: '17 5 * * *'
+  workflow_dispatch:
+    inputs:
+      job:
+        description: 'Quale job eseguire'
+        type: choice
+        default: all
+        options:
+          - all
+          - drugs
+          - content
+
+# Mai due esecuzioni insieme (genererebbero due articoli); una in corso non va interrotta.
+concurrency:
+  group: wikifarma-cron
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci --no-audit --no-fund
+
+      - name: Esegui cron
+        run: npx tsx scripts/run-cron.mjs "${{ github.event.inputs.job || 'all' }}"
+        env:
+          # Firebase Admin (scrittura articoli, strategia, snapshot GA4, foto)
+          FIREBASE_ADMIN_CLIENT_EMAIL: ${{ secrets.FIREBASE_ADMIN_CLIENT_EMAIL }}
+          FIREBASE_ADMIN_PRIVATE_KEY: ${{ secrets.FIREBASE_ADMIN_PRIVATE_KEY }}
+          FIREBASE_ADMIN_PROJECT_ID: ${{ secrets.FIREBASE_ADMIN_PROJECT_ID }}
+          # Firebase client (lettura pubblica degli articoli)
+          NEXT_PUBLIC_FIREBASE_API_KEY: ${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}
+          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }}
+          NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }}
+          NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ${{ secrets.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET }}
+          NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}
+          NEXT_PUBLIC_FIREBASE_APP_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}
+          # Servizi
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          UNSPLASH_ACCESS_KEY: ${{ secrets.UNSPLASH_ACCESS_KEY }}
+          GA4_PROPERTY_ID: ${{ secrets.GA4_PROPERTY_ID }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          ADMIN_NOTIFICATION_EMAIL: ${{ secrets.ADMIN_NOTIFICATION_EMAIL }}
+          # Facoltativi
+          NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}

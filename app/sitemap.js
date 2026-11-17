@@ -1,6 +1,7 @@
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { SITE_URL } from '@/lib/constants';
+import { getAdminDb, isFirebaseAdminConfigured } from '@/lib/firebaseAdmin';
 
 export const revalidate = 43200; // ora che il cron genera 1 articolo/giorno invece di 2, 3h di cache bastano
 
@@ -17,6 +18,22 @@ const STATIC_ROUTES = [
   { path: 'contact', priority: 0.2, changeFrequency: 'yearly' },
 ];
 
+// Solo i campi che servono (slug, data, esistenza delle traduzioni): la lettura
+// con l'SDK client scaricava per ogni articolo l'intero testo e TUTTE le
+// traduzioni (decine di MB a ogni rigenerazione della sitemap).
+async function loadPostsForSitemap() {
+  if (isFirebaseAdminConfigured()) {
+    const langs = ['en', 'es', 'fr', 'de'];
+    const snap = await getAdminDb()
+      .collection('posts')
+      .select('slug', 'created_at', 'translations_updated_at', ...langs.map((l) => `translations.${l}.title`))
+      .get();
+    return snap.docs.map((d) => d.data());
+  }
+  const snap = await getDocs(collection(db, 'posts'));
+  return snap.docs.map((d) => d.data());
+}
+
 export default async function sitemap() {
   const staticEntries = STATIC_ROUTES.map((route) => ({
     url: `${SITE_URL}/${route.path}`,
@@ -28,9 +45,8 @@ export default async function sitemap() {
   let postEntries = [];
   let translationEntries = [];
   try {
-    const snap = await getDocs(collection(db, 'posts'));
-    postEntries = snap.docs.map((doc) => {
-      const data = doc.data();
+    const posts = await loadPostsForSitemap();
+    postEntries = posts.map((data) => {
       return {
         url: `${SITE_URL}/${data.slug}`,
         lastModified: data.created_at?.toDate?.() || new Date(),
@@ -44,8 +60,7 @@ export default async function sitemap() {
     // therefore trigger, since translation happens on first request) many
     // pages at once, risking Gemini rate limits. Cached translations grow
     // in here naturally as real visitors/crawls generate them.
-    snap.docs.forEach((doc) => {
-      const data = doc.data();
+    posts.forEach((data) => {
       if (!data.translations) return;
       Object.keys(data.translations).forEach((lang) => {
         translationEntries.push({

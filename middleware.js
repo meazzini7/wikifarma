@@ -11,6 +11,10 @@ const RESERVED_PATHS = new Set([
   ...SUPPORTED_LANGS,
 ]);
 
+// Stesse lingue di lib/translate.js (ON_DEMAND_LANGS): reindirizzare verso una
+// lingua senza traduzione in cache porterebbe solo a un secondo rimbalzo.
+const ON_DEMAND_LANGS = (process.env.TRANSLATE_ON_DEMAND_LANGS || 'en').split(',').map((l) => l.trim());
+
 const BOT_UA_RE = /bot|crawl|spider|slurp|facebookexternalhit|whatsapp|telegrambot|preview/i;
 
 export function middleware(request) {
@@ -33,7 +37,7 @@ export function middleware(request) {
   if (request.cookies.get('wf_lang')) return NextResponse.next();
 
   const acceptLanguage = (request.headers.get('accept-language') || '').toLowerCase();
-  const preferred = SUPPORTED_LANGS.find((lang) => acceptLanguage.includes(lang));
+  const preferred = SUPPORTED_LANGS.find((lang) => ON_DEMAND_LANGS.includes(lang) && acceptLanguage.includes(lang));
   if (!preferred) return NextResponse.next();
 
   const url = request.nextUrl.clone();

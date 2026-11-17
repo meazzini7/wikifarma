@@ -20,7 +20,7 @@ const DISCLAIMERS = {
 // senza cache, ogni visita rifà la query Firestore e, se la traduzione non
 // è già in cache su Firestore, anche una chiamata Gemini - 12 ore di ISR
 // evitano entrambe le cose per le richieste ripetute.
-export const revalidate = 43200;
+export const revalidate = 604800;
 
 // Testi delle sezioni di fidelizzazione per lingua: queste pagine portano il
 // traffico estero e prima erano un vicolo cieco (nessun altro articolo).
