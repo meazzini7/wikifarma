@@ -58,7 +58,7 @@ button {
 }
 
 .nav-container {
-  max-width: 1200px;
+  max-width: 1760px;
   margin: 0 auto;
   padding: 14px 20px;
   display: flex;
@@ -272,7 +272,7 @@ button {
 
 /* --- Sections --- */
 .section-home {
-  max-width: 1200px;
+  max-width: 1760px;
   margin: 50px auto;
   padding: 0 20px;
 }
@@ -330,7 +330,7 @@ button {
 
 .news-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 22px;
 }
 
@@ -382,7 +382,7 @@ button {
 
 /* --- Features --- */
 .features-section {
-  max-width: 1200px;
+  max-width: 1760px;
   margin: 30px auto;
   padding: 0 20px;
   text-align: center;
@@ -504,7 +504,7 @@ button {
 
 /* --- Article --- */
 .article-page {
-  max-width: 800px;
+  max-width: 900px;
   margin: 40px auto;
   padding: 0 20px 60px;
 }
@@ -702,7 +702,7 @@ button {
 
 /* --- Admin --- */
 .admin-wrap {
-  max-width: 1200px;
+  max-width: 1760px;
   margin: 40px auto;
   padding: 0 20px 60px;
 }

@@ -235,7 +235,7 @@ incrementali (i18n, performance, nuove feature) da trattare come task a se stant
 - Una esecuzione al giorno (`all`): farmaci e poi contenuti; `dailyCategory` decide quale dei due genera (1 articolo/giorno), l'altro fa il
   "giorno libero" (strategia settimanale, traduzione dell'articolo piu' letto, snapshot GA4). `concurrency` impedisce due run insieme.
 - Il runner esce con codice 1 se un job fallisce o se mancano i secrets (la run diventa rossa e GitHub invia la mail). Con `CRON_SECRET` nei
-  secrets chiama anche `POST /api/revalidate` (una richiesta minima); senza, home/elenchi si aggiornano con l'ISR (6 ore).
+  secrets chiama anche `POST /api/revalidate` (una richiesta minima); senza, home ed elenchi si aggiornano con l'ISR (1 ora).
 - Secrets richiesti (Settings > Secrets and variables > Actions): FIREBASE_ADMIN_CLIENT_EMAIL, FIREBASE_ADMIN_PRIVATE_KEY, NEXT_PUBLIC_FIREBASE_*
   (6), GEMINI_API_KEY, UNSPLASH_ACCESS_KEY, GA4_PROPERTY_ID, RESEND_API_KEY, ADMIN_NOTIFICATION_EMAIL; facoltativi FIREBASE_ADMIN_PROJECT_ID,
   NEXT_PUBLIC_SITE_URL, CRON_SECRET.
